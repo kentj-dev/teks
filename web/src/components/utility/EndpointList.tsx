@@ -6,7 +6,9 @@ import type { Provider } from "../../types";
 export function EndpointList({ provider }: { provider: Provider }) {
   const [selectedEndpoint, setSelectedEndpoint] = useState<string | null>(null);
   const endpoints = endpointsFor(provider);
-  useEffect(() => setSelectedEndpoint(null), [provider]);
+  useEffect(() => {
+    setSelectedEndpoint(null);
+  }, [provider]);
 
   return (
     <section className="mt-7" aria-labelledby="api-endpoints-title">

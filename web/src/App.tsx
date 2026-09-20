@@ -35,7 +35,9 @@ function App() {
     window.localStorage.setItem('teks-theme', theme);
   }, [theme]);
 
-  useEffect(() => window.localStorage.setItem('teks-provider', provider), [provider]);
+  useEffect(() => {
+    window.localStorage.setItem('teks-provider', provider);
+  }, [provider]);
 
   useEffect(() => {
     fetch('/api/_teks/provider')

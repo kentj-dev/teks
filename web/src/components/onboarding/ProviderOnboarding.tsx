@@ -1,12 +1,11 @@
-import { useState } from "react";
+import { useState } from 'react';
 
-import type { Provider, Theme } from "../../types";
-import { IconButton } from "../ui/IconButton";
-import { ThemeButton } from "../ui/ThemeButton";
-import { AboutStep } from "./AboutStep";
-import { EndpointsStep } from "./EndpointsStep";
-import { ProviderStep } from "./ProviderStep";
-import { SetupProgress } from "./SetupProgress";
+import type { Provider, Theme } from '../../types';
+import { IconButton } from '../ui/IconButton';
+import { ThemeButton } from '../ui/ThemeButton';
+import { AboutStep } from './AboutStep';
+import { EndpointsStep } from './EndpointsStep';
+import { ProviderStep } from './ProviderStep';
 
 export function ProviderOnboarding({
   provider,
@@ -41,9 +40,7 @@ export function ProviderOnboarding({
             </div>
             <div>
               <p className="text-sm font-semibold">Teks</p>
-              <p className="text-[11px] text-black/40 dark:text-white/35">
-                Local SMS testing
-              </p>
+              <p className="text-[11px] text-black/40 dark:text-white/35">Local SMS testing</p>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -58,23 +55,11 @@ export function ProviderOnboarding({
             )}
           </div>
         </header>
-        <SetupProgress step={step} />
+        {/* <SetupProgress step={step} /> */}
         <section className="my-auto py-10 sm:py-14">
           {step === 1 && <AboutStep onContinue={() => setStep(2)} />}
-          {step === 2 && (
-            <ProviderStep
-              provider={provider}
-              onSelect={selectProvider}
-              onBack={() => setStep(1)}
-            />
-          )}
-          {step === 3 && (
-            <EndpointsStep
-              provider={provider}
-              onBack={() => setStep(2)}
-              onComplete={onComplete}
-            />
-          )}
+          {step === 2 && <ProviderStep provider={provider} onSelect={selectProvider} onBack={() => setStep(1)} />}
+          {step === 3 && <EndpointsStep provider={provider} onBack={() => setStep(2)} onComplete={onComplete} />}
         </section>
         <p className="pb-2 text-center text-[11px] text-black/35 dark:text-white/30">
           You can revisit setup later from Teks Status.

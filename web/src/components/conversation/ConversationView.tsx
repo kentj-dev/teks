@@ -52,14 +52,13 @@ export function ConversationView({
   );
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  useEffect(
-    () => window.localStorage.setItem("teks-view-mode", viewMode),
-    [viewMode],
-  );
-  useEffect(
-    () => bottomRef.current?.scrollIntoView(),
-    [active?.messages.length, active?.recipient],
-  );
+  useEffect(() => {
+    window.localStorage.setItem("teks-view-mode", viewMode);
+  }, [viewMode]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView();
+  }, [active?.messages.length, active?.recipient]);
 
   return (
     <section
