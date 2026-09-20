@@ -1,0 +1,6 @@
+/target
+/web/node_modules
+/web/*.tsbuildinfo
+*.db
+*.db-shm
+*.db-wal
