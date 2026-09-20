@@ -39,6 +39,7 @@ type Conversation = {
 
 type Theme = 'light' | 'dark';
 type ViewMode = 'phone' | 'developer';
+type Provider = 'rest' | 'semaphore';
 
 const quickLinks = [
   { label: 'Teks website', hint: 'Product home', href: 'https://teks.dev', icon: 'globe' as const },
@@ -716,6 +717,7 @@ function UtilityPanel({
   onThemeChange: (theme: Theme) => void;
 }) {
   const [selectedEndpoint, setSelectedEndpoint] = useState<string | null>(null);
+  const [provider, setProvider] = useState<Provider>('rest');
 
   return (
     <aside className="scrollbar-none border-l border-gray-300 hidden min-h-0 min-w-0 flex-col overflow-y-auto bg-[#fafafa] p-5 xl:flex dark:bg-[#19191b]">
@@ -728,6 +730,17 @@ function UtilityPanel({
           </div>
           <p className="mt-2 font-mono text-[10px] text-black/40 dark:text-white/35">{window.location.host}</p>
         </div>
+        <label className="mt-4 block">
+          <span className="text-[11px] font-medium uppercase text-[#242424] dark:text-white/30">Provider</span>
+          <select
+            value={provider}
+            onChange={(event) => setProvider(event.target.value as Provider)}
+            className="mt-2 h-10 w-full rounded-lg border border-gray-400 bg-white px-3 text-xs font-medium text-black shadow-sm outline-none ring-accent/20 focus:border-accent focus:ring-2 dark:bg-[#202023] dark:text-white"
+          >
+            <option value="rest">REST API</option>
+            <option value="semaphore">Semaphore</option>
+          </select>
+        </label>
       </div>
 
       <div className="mt-7">
