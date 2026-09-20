@@ -1,6 +1,7 @@
 import {
   BookOpen,
   Check,
+  ChevronDown,
   ChevronLeft,
   Code2,
   Coffee,
@@ -21,6 +22,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 type Message = {
   id: string;
+  provider_message_id?: number;
   provider: string;
   to: string;
   from: string | null;
@@ -40,6 +42,7 @@ type Conversation = {
 type Theme = 'light' | 'dark';
 type ViewMode = 'phone' | 'developer';
 type Provider = 'rest' | 'semaphore';
+type ProviderResponse = { provider: Provider };
 
 const quickLinks = [
   { label: 'Teks website', hint: 'Product home', href: 'https://teks.dev', icon: 'globe' as const },
@@ -76,7 +79,7 @@ const sampleMessage = {
   created_at: '2026-09-20T10:30:00Z',
 };
 
-const apiEndpoints: ApiEndpoint[] = [
+const restApiEndpoints: ApiEndpoint[] = [
   {
     method: 'GET',
     path: '/api/health',
@@ -128,7 +131,91 @@ const apiEndpoints: ApiEndpoint[] = [
   },
 ];
 
-const endpoint = `${window.location.origin}/api/messages`;
+const semaphoreMessage = {
+  message_id: 1,
+  user_id: 1,
+  user: 'local@teks',
+  account_id: 1,
+  account: 'Teks Local',
+  recipient: '09171234567',
+  message: 'Hello from Teks',
+  sender_name: 'MyApp',
+  network: 'Unknown',
+  status: 'Sent',
+  type: 'Single',
+  source: 'Api',
+  created_at: '2026-09-20 18:30:00',
+  updated_at: '2026-09-20 18:30:00',
+};
+
+const semaphoreApiEndpoints: ApiEndpoint[] = [
+  {
+    method: 'POST',
+    path: '/api/v4/messages',
+    description: 'Capture one or up to 1,000 messages.',
+    payloadLabel: 'Form parameters',
+    payload: { apikey: 'local', number: '09171234567', message: 'Hello from Teks', sendername: 'MyApp' },
+  },
+  {
+    method: 'POST',
+    path: '/api/v4/priority',
+    description: 'Capture a priority message.',
+    payloadLabel: 'Form parameters',
+    payload: { apikey: 'local', number: '09171234567', message: 'Important message', sendername: 'MyApp' },
+  },
+  {
+    method: 'POST',
+    path: '/api/v4/otp',
+    description: 'Capture an OTP message with an optional code.',
+    payloadLabel: 'Form parameters',
+    payload: { apikey: 'local', number: '09171234567', message: 'Your OTP is {otp}', code: '123456' },
+  },
+  {
+    method: 'GET',
+    path: '/api/v4/messages',
+    description: 'List captured Semaphore messages.',
+    payloadLabel: 'Sample response',
+    payload: [semaphoreMessage],
+  },
+  {
+    method: 'GET',
+    path: '/api/v4/messages/:id',
+    description: 'Retrieve one message by numeric ID.',
+    payloadLabel: 'Sample response',
+    payload: semaphoreMessage,
+  },
+  {
+    method: 'GET',
+    path: '/api/v4/account',
+    description: 'Retrieve the simulated local account.',
+    payloadLabel: 'Sample response',
+    payload: { account_id: 1, account_name: 'Teks Local', status: 'Active', credit_balance: 999999 },
+  },
+  {
+    method: 'GET',
+    path: '/api/v4/account/transactions',
+    description: 'List simulated account transactions.',
+    payloadLabel: 'Sample response',
+    payload: [],
+  },
+  {
+    method: 'GET',
+    path: '/api/v4/account/sendernames',
+    description: 'List local sender names.',
+    payloadLabel: 'Sample response',
+    payload: [{ name: 'Teks', status: 'Active', created_at: '2026-01-01 00:00:00' }],
+  },
+  {
+    method: 'GET',
+    path: '/api/v4/account/users',
+    description: 'List simulated account users.',
+    payloadLabel: 'Sample response',
+    payload: [{ user_id: 1, email: 'local@teks', role: 'Owner', status: 'Active' }],
+  },
+];
+
+const restEndpoint = `${window.location.origin}/api/messages`;
+const semaphoreEndpoint = `${window.location.origin}/api/v4/messages`;
 
 function formatTime(value: string) {
   return new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(new Date(value));
@@ -146,12 +233,36 @@ function formatPhone(value: string) {
   return value;
 }
 
+function formatProvider(value: string) {
+  if (value === 'rest') return 'REST API';
+  if (value === 'semaphore') return 'Semaphore';
+  return value;
+}
+
+function payloadRecord(message: Message) {
+  return message.payload && typeof message.payload === 'object' && !Array.isArray(message.payload)
+    ? (message.payload as Record<string, unknown>)
+    : {};
+}
+
+function semaphoreFields(message: Message): [string, string][] {
+  if (message.provider !== 'semaphore') return [];
+  const payload = payloadRecord(message);
+  return [
+    ['Semaphore Message ID', String(message.provider_message_id ?? '—')],
+    ['Type', typeof payload.type === 'string' ? payload.type : 'Single'],
+    ['Network', typeof payload.network === 'string' ? payload.network : 'Unknown'],
+    ...(typeof payload.code_text === 'string' ? ([['OTP Code', payload.code_text]] as [string, string][]) : []),
+  ];
+}
+
 type IconName =
   | 'search'
   | 'copy'
   | 'info'
   | 'trash'
   | 'back'
+  | 'down'
   | 'close'
   | 'check'
   | 'sun'
@@ -170,6 +281,7 @@ const icons: Record<IconName, LucideIcon> = {
   info: Info,
   trash: Trash2,
   back: ChevronLeft,
+  down: ChevronDown,
   close: X,
   check: Check,
   sun: Sun,
@@ -205,6 +317,9 @@ function App() {
     const saved = window.localStorage.getItem('teks-view-mode');
     return saved === 'developer' ? 'developer' : 'phone';
   });
+  const [provider, setProvider] = useState<Provider>(() => {
+    return window.localStorage.getItem('teks-provider') === 'semaphore' ? 'semaphore' : 'rest';
+  });
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -218,7 +333,19 @@ function App() {
   }, [viewMode]);
 
   useEffect(() => {
-    fetch('/api/messages')
+    window.localStorage.setItem('teks-provider', provider);
+  }, [provider]);
+
+  useEffect(() => {
+    fetch('/api/_teks/provider')
+      .then((response) => {
+        if (!response.ok) throw new Error('Could not load provider');
+        return response.json() as Promise<ProviderResponse>;
+      })
+      .then((response) => setProvider(response.provider))
+      .catch(() => showToast('Could not load provider'));
+
+    fetch('/api/_teks/messages')
       .then((response) => {
         if (!response.ok) throw new Error('Could not load messages');
         return response.json() as Promise<Message[]>;
@@ -293,9 +420,25 @@ function App() {
     showToast(label);
   }
 
+  async function changeProvider(nextProvider: Provider) {
+    try {
+      const response = await fetch('/api/_teks/provider', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider: nextProvider }),
+      });
+      if (!response.ok) return showToast('Could not change provider');
+      const updated = (await response.json()) as ProviderResponse;
+      setProvider(updated.provider);
+      showToast(`${formatProvider(updated.provider)} selected`);
+    } catch {
+      showToast('Could not change provider');
+    }
+  }
+
   async function deleteMessage(message: Message) {
     if (!window.confirm('Delete this message?')) return;
-    const response = await fetch(`/api/messages/${message.id}`, { method: 'DELETE' });
+    const response = await fetch(`/api/_teks/messages/${message.id}`, { method: 'DELETE' });
     if (!response.ok) return showToast('Could not delete message');
     setMessages((current) => current.filter((item) => item.id !== message.id));
     setSelectedMessage(null);
@@ -304,7 +447,7 @@ function App() {
 
   async function clearAll() {
     if (!window.confirm('Delete every captured message? This cannot be undone.')) return;
-    const response = await fetch('/api/messages', { method: 'DELETE' });
+    const response = await fetch('/api/_teks/messages', { method: 'DELETE' });
     if (!response.ok) return showToast('Could not clear messages');
     setMessages([]);
     setSelectedRecipient(null);
@@ -317,7 +460,7 @@ function App() {
     const results = await Promise.all(
       conversation.messages.map(async (message) => ({
         id: message.id,
-        deleted: (await fetch(`/api/messages/${message.id}`, { method: 'DELETE' })).ok,
+        deleted: (await fetch(`/api/_teks/messages/${message.id}`, { method: 'DELETE' })).ok,
       })),
     );
     const deletedIds = new Set(results.filter((result) => result.deleted).map((result) => result.id));
@@ -516,14 +659,20 @@ function App() {
               )}
             </>
           ) : (
-            <EmptyState onCopy={copy} theme={theme} onThemeChange={setTheme} />
+            <EmptyState onCopy={copy} theme={theme} onThemeChange={setTheme} provider={provider} />
           )}
           <div className="lg:hidden">
             <Status connected={connected} />
           </div>
         </section>
 
-        <UtilityPanel connected={connected} theme={theme} onThemeChange={setTheme} />
+        <UtilityPanel
+          connected={connected}
+          theme={theme}
+          onThemeChange={setTheme}
+          provider={provider}
+          onProviderChange={changeProvider}
+        />
       </section>
 
       {selectedMessage && (
@@ -622,7 +771,8 @@ function DeveloperMessageCard({
     ['UUID', message.id],
     ['To', message.to],
     ['From', message.from ?? '—'],
-    ['Provider', message.provider],
+    ['Provider', formatProvider(message.provider)],
+    ...semaphoreFields(message),
     ['Status', message.status],
     ['Timestamp', formatFullDate(message.created_at)],
   ];
@@ -688,7 +838,9 @@ function DeveloperMessageCard({
 
         <div className="mt-4">
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-[9px] font-medium uppercase text-black/30 dark:text-white/25">Raw request payload</p>
+            <p className="text-[9px] font-medium uppercase text-black/30 dark:text-white/25">
+              {message.provider === 'semaphore' ? 'Raw request' : 'Raw request payload'}
+            </p>
             <button
               type="button"
               onClick={() => onCopy(JSON.stringify(message.payload, null, 2), 'Payload copied')}
@@ -711,13 +863,19 @@ function UtilityPanel({
   connected,
   theme,
   onThemeChange,
+  provider,
+  onProviderChange,
 }: {
   connected: boolean;
   theme: Theme;
   onThemeChange: (theme: Theme) => void;
+  provider: Provider;
+  onProviderChange: (provider: Provider) => void;
 }) {
   const [selectedEndpoint, setSelectedEndpoint] = useState<string | null>(null);
-  const [provider, setProvider] = useState<Provider>('rest');
+  const endpoints = provider === 'semaphore' ? semaphoreApiEndpoints : restApiEndpoints;
+
+  useEffect(() => setSelectedEndpoint(null), [provider]);
 
   return (
     <aside className="scrollbar-none border-l border-gray-300 hidden min-h-0 min-w-0 flex-col overflow-y-auto bg-[#fafafa] p-5 xl:flex dark:bg-[#19191b]">
@@ -732,14 +890,20 @@ function UtilityPanel({
         </div>
         <label className="mt-4 block">
           <span className="text-[11px] font-medium uppercase text-[#242424] dark:text-white/30">Provider</span>
-          <select
-            value={provider}
-            onChange={(event) => setProvider(event.target.value as Provider)}
-            className="mt-2 h-10 w-full rounded-lg border border-gray-400 bg-white px-3 text-xs font-medium text-black shadow-sm outline-none ring-accent/20 focus:border-accent focus:ring-2 dark:bg-[#202023] dark:text-white"
-          >
-            <option value="rest">REST API</option>
-            <option value="semaphore">Semaphore</option>
-          </select>
+          <span className="relative mt-2 block">
+            <select
+              value={provider}
+              onChange={(event) => onProviderChange(event.target.value as Provider)}
+              className="h-10 w-full appearance-none rounded-lg border border-gray-400 bg-white px-3 pr-10 text-xs font-medium text-black shadow-sm outline-none ring-accent/20 focus:border-accent focus:ring-2 dark:bg-[#202023] dark:text-white"
+            >
+              <option value="rest">REST API</option>
+              <option value="semaphore">Semaphore</option>
+            </select>
+            <Icon
+              name="down"
+              className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black/55 dark:text-white/55"
+            />
+          </span>
         </label>
       </div>
 
@@ -797,7 +961,7 @@ function UtilityPanel({
           API endpoints
         </p>
         <div className="mt-2 space-y-1">
-          {apiEndpoints.map((apiEndpoint) => {
+          {endpoints.map((apiEndpoint) => {
             const id = `${apiEndpoint.method}-${apiEndpoint.path}`;
             const isSelected = selectedEndpoint === id;
             const methodColor =
@@ -872,12 +1036,18 @@ function EmptyState({
   onCopy,
   theme,
   onThemeChange,
+  provider,
 }: {
   onCopy: (value: string, label?: string) => void;
   theme: Theme;
   onThemeChange: (theme: Theme) => void;
+  provider: Provider;
 }) {
-  const command = `curl -X POST ${endpoint} \\\n+  -H "Content-Type: application/json" \\\n+  -d '{\n    "to": "09171234567",\n    "from": "MyApp",\n    "message": "Your OTP is 123456"\n  }'`;
+  const endpoint = provider === 'semaphore' ? semaphoreEndpoint : restEndpoint;
+  const command =
+    provider === 'semaphore'
+      ? `curl --data \\\n  "apikey=local&number=09171234567&message=Your OTP is 123456&sendername=MyApp" \\\n  ${endpoint}`
+      : `curl -X POST ${endpoint} \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "to": "09171234567",\n    "from": "MyApp",\n    "message": "Your OTP is 123456"\n  }'`;
   return (
     <div className="relative flex flex-1 items-center justify-center overflow-y-auto px-5 py-10">
       <div className="absolute right-4 top-4 xl:hidden">
@@ -928,7 +1098,8 @@ function Inspector({
     ['UUID', message.id],
     ['To', message.to],
     ['From', message.from ?? '—'],
-    ['Provider', message.provider],
+    ['Provider', formatProvider(message.provider)],
+    ...semaphoreFields(message),
     ['Status', message.status],
     ['Timestamp', formatFullDate(message.created_at)],
   ];
@@ -976,7 +1147,9 @@ function Inspector({
         </section>
         <section className="mt-6">
           <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-xs font-medium text-[#242424] dark:text-white/40">Raw request payload</h3>
+            <h3 className="text-xs font-medium text-[#242424] dark:text-white/40">
+              {message.provider === 'semaphore' ? 'Raw request' : 'Raw request payload'}
+            </h3>
             <button
               onClick={() => onCopy(JSON.stringify(message.payload, null, 2), 'Payload copied')}
               className="inline-flex items-center gap-1 text-[11px] text-accent"

@@ -18,6 +18,8 @@ pub enum AppError {
     MalformedJson,
     #[error("Message not found.")]
     NotFound,
+    #[error("{0}")]
+    ProviderMismatch(String),
     #[error(
         "Teks could not start.\n\nPort {port} is already in use.\n\nTry:\n\nteks --port {suggestion}"
     )]
@@ -37,6 +39,7 @@ impl IntoResponse for AppError {
         let (status, message) = match &self {
             Self::MalformedJson => (StatusCode::BAD_REQUEST, self.to_string()),
             Self::NotFound => (StatusCode::NOT_FOUND, self.to_string()),
+            Self::ProviderMismatch(_) => (StatusCode::CONFLICT, self.to_string()),
             Self::Validation(_) => (StatusCode::UNPROCESSABLE_ENTITY, self.to_string()),
             _ => {
                 tracing::error!(error = %self, "request failed");

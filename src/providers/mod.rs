@@ -1,11 +1,78 @@
 mod rest;
+pub mod semaphore;
+
+use std::sync::{Arc, RwLock};
 
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use thiserror::Error;
 use uuid::Uuid;
 
 pub use rest::{RestIncomingRequest, RestProvider};
+
+use crate::error::AppError;
+
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Provider {
+    #[default]
+    Rest,
+    Semaphore,
+}
+
+impl Provider {
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Rest => "REST API",
+            Self::Semaphore => "Semaphore",
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct ProviderSelection {
+    current: Arc<RwLock<Provider>>,
+}
+
+impl ProviderSelection {
+    pub fn new(provider: Provider) -> Self {
+        Self {
+            current: Arc::new(RwLock::new(provider)),
+        }
+    }
+
+    pub fn current(&self) -> Provider {
+        *self
+            .current
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+    }
+
+    pub fn set(&self, provider: Provider) {
+        *self
+            .current
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = provider;
+    }
+
+    pub fn require(&self, expected: Provider) -> Result<(), AppError> {
+        let active = self.current();
+        if active == expected {
+            return Ok(());
+        }
+
+        let message = match active {
+            Provider::Semaphore => {
+                "Semaphore is selected. Only Semaphore endpoints under '/api/v4' can be used."
+            }
+            Provider::Rest => {
+                "REST API is selected. Only REST endpoints under '/api/messages' can be used. Select Semaphore or start Teks with '--semaphore'."
+            }
+        };
+        Err(AppError::ProviderMismatch(message.into()))
+    }
+}
 
 pub struct CapturedMessage {
     pub id: Uuid,

@@ -13,6 +13,7 @@ use cli::Cli;
 use database::Database;
 use error::AppError;
 use events::EventBus;
+use providers::{Provider, ProviderSelection};
 use tokio::net::TcpListener;
 use tracing::{error, info};
 use tracing_subscriber::EnvFilter;
@@ -21,6 +22,7 @@ use tracing_subscriber::EnvFilter;
 pub struct AppState {
     pub database: Database,
     pub events: EventBus,
+    pub provider: ProviderSelection,
 }
 
 #[tokio::main]
@@ -44,9 +46,15 @@ async fn run() -> Result<(), AppError> {
         .map_err(|_| AppError::InvalidAddress(format!("{}:{}", cli.host, cli.port)))?;
 
     let database = Database::open(cli.data_dir.as_deref()).await?;
+    let initial_provider = if cli.semaphore {
+        Provider::Semaphore
+    } else {
+        Provider::Rest
+    };
     let state = Arc::new(AppState {
         database,
         events: EventBus::new(),
+        provider: ProviderSelection::new(initial_provider),
     });
     let app = api::router(Arc::clone(&state));
 
@@ -63,8 +71,14 @@ async fn run() -> Result<(), AppError> {
 
     let base_url = format!("http://{address}");
     println!(
-        "Teks {}\n\n✓ SMS gateway ready\n✓ Database ready\n\nInbox     {base_url}\nREST API  {base_url}/api/messages\n\nPress Ctrl+C to stop.",
-        env!("CARGO_PKG_VERSION")
+        "Teks {}\n\n✓ SMS gateway ready\n✓ Database ready\n\nProvider  {}\nInbox     {base_url}\nAPI       {base_url}{}\n\nPress Ctrl+C to stop.",
+        env!("CARGO_PKG_VERSION"),
+        initial_provider.label(),
+        if initial_provider == Provider::Semaphore {
+            "/api/v4/messages"
+        } else {
+            "/api/messages"
+        }
     );
 
     if !cli.no_open {

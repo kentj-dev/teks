@@ -12,7 +12,7 @@ use crate::{
     AppState,
     database::Message,
     error::AppError,
-    providers::{RestIncomingRequest, RestProvider, SmsProviderAdapter},
+    providers::{Provider, RestIncomingRequest, RestProvider, SmsProviderAdapter},
 };
 
 #[derive(Serialize)]
@@ -33,6 +33,7 @@ pub async fn create_message(
     State(state): State<Arc<AppState>>,
     payload: Result<Json<serde_json::Value>, JsonRejection>,
 ) -> Result<(StatusCode, Json<CreateMessageResponse>), AppError> {
+    state.provider.require(Provider::Rest)?;
     let Json(raw_payload) = payload.map_err(|_| AppError::MalformedJson)?;
     let request: RestIncomingRequest =
         serde_json::from_value(raw_payload.clone()).map_err(|_| AppError::MalformedJson)?;
@@ -57,6 +58,13 @@ pub async fn create_message(
 pub async fn list_messages(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<Message>>, AppError> {
+    state.provider.require(Provider::Rest)?;
+    inbox_list_messages(State(state)).await
+}
+
+pub async fn inbox_list_messages(
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<Vec<Message>>, AppError> {
     Ok(Json(state.database.list_messages().await?))
 }
 
@@ -64,10 +72,26 @@ pub async fn get_message(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Message>, AppError> {
+    state.provider.require(Provider::Rest)?;
+    inbox_get_message(State(state), Path(id)).await
+}
+
+pub async fn inbox_get_message(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<Message>, AppError> {
     Ok(Json(state.database.get_message(id).await?))
 }
 
 pub async fn delete_message(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<DeleteResponse>, AppError> {
+    state.provider.require(Provider::Rest)?;
+    inbox_delete_message(State(state), Path(id)).await
+}
+
+pub async fn inbox_delete_message(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<DeleteResponse>, AppError> {
@@ -79,6 +103,13 @@ pub async fn delete_message(
 }
 
 pub async fn clear_messages(
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<DeleteResponse>, AppError> {
+    state.provider.require(Provider::Rest)?;
+    inbox_clear_messages(State(state)).await
+}
+
+pub async fn inbox_clear_messages(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<DeleteResponse>, AppError> {
     let deleted = state.database.clear_messages().await?;
