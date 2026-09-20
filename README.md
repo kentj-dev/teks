@@ -24,7 +24,7 @@ Messages persist in the operating system's per-user application data directory.
 
 ## Frontend development
 
-Run Teks, then in a second terminal:
+Run the Rust backend, then in a second terminal:
 
 ```bash
 cd web
@@ -33,6 +33,16 @@ npm run dev
 ```
 
 Vite proxies `/api` to the Rust server on port 8026.
+Changes under `web/src` appear immediately in the Vite browser window; no manual frontend build is needed in this mode.
+
+`cargo run` serves the frontend already compiled into `web/dist`. To view layout changes through the Rust server instead of Vite, rebuild the frontend first:
+
+```bash
+cd web
+npm run build
+cd ..
+cargo run
+```
 
 ## Production build
 

@@ -48,7 +48,7 @@ async fn run() -> Result<(), AppError> {
         database,
         events: EventBus::new(),
     });
-    let app = api::router(state);
+    let app = api::router(Arc::clone(&state));
 
     let listener = TcpListener::bind(address).await.map_err(|source| {
         if source.kind() == std::io::ErrorKind::AddrInUse {
@@ -79,15 +79,16 @@ async fn run() -> Result<(), AppError> {
 
     info!(%address, "server started");
     axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
+        .with_graceful_shutdown(shutdown_signal(state))
         .await
         .map_err(AppError::Io)?;
     info!("server stopped");
     Ok(())
 }
 
-async fn shutdown_signal() {
+async fn shutdown_signal(state: Arc<AppState>) {
     if let Err(error) = tokio::signal::ctrl_c().await {
         error!(%error, "failed to install Ctrl+C handler");
     }
+    state.events.shutdown();
 }

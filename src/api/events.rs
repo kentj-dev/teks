@@ -11,16 +11,24 @@ pub async fn events(
     State(state): State<Arc<AppState>>,
 ) -> Sse<impl futures_core::Stream<Item = Result<Event, Infallible>>> {
     let mut receiver = state.events.subscribe();
+    let mut shutdown = state.events.subscribe_shutdown();
     let stream = async_stream::stream! {
         loop {
-            match receiver.recv().await {
-                Ok(message) => {
-                    if let Ok(data) = serde_json::to_string(&message) {
-                        yield Ok(Event::default().event("new-message").data(data));
+            tokio::select! {
+                result = receiver.recv() => match result {
+                    Ok(message) => {
+                        if let Ok(data) = serde_json::to_string(&message) {
+                            yield Ok(Event::default().event("new-message").data(data));
+                        }
                     }
-                }
-                Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => continue,
-                Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
+                    Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => continue,
+                    Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
+                },
+                changed = shutdown.changed() => {
+                    if changed.is_err() || *shutdown.borrow() {
+                        break;
+                    }
+                },
             }
         }
     };
