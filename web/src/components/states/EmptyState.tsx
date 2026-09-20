@@ -1,6 +1,7 @@
-import type { Provider, Theme } from "../../types";
-import { Icon } from "../ui/Icon";
-import { ThemeButton } from "../ui/ThemeButton";
+import type { Provider, Theme } from '../../types';
+import { Icon } from '../ui/Icon';
+import { Logo } from '../ui/Logo';
+import { ThemeButton } from '../ui/ThemeButton';
 
 export function EmptyState({
   onCopy,
@@ -13,9 +14,9 @@ export function EmptyState({
   onThemeChange: (theme: Theme) => void;
   provider: Provider;
 }) {
-  const endpoint = `${window.location.origin}${provider === "semaphore" ? "/api/v4/messages" : "/api/messages"}`;
+  const endpoint = `${window.location.origin}${provider === 'semaphore' ? '/api/v4/messages' : '/api/messages'}`;
   const command =
-    provider === "semaphore"
+    provider === 'semaphore'
       ? `curl --data \\\n+  "apikey=local&number=09171234567&message=Your OTP is 123456&sendername=MyApp" \\\n+  ${endpoint}`
       : `curl -X POST ${endpoint} \\\n+  -H "Content-Type: application/json" \\\n+  -d '{\n    "to": "09171234567",\n    "from": "MyApp",\n    "message": "Your OTP is 123456"\n  }'`;
 
@@ -25,18 +26,12 @@ export function EmptyState({
         <ThemeButton theme={theme} onChange={onThemeChange} />
       </div>
       <div className="w-full max-w-xl text-center">
-        <div className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-[22px] bg-accent text-2xl font-bold text-white shadow-lg shadow-accent/20">
-          T
-        </div>
-        <h2 className="text-xl font-semibold tracking-tight">
-          No messages yet
-        </h2>
-        <p className="mt-2 text-sm text-[#242424] dark:text-white/40">
-          Send your first SMS request to:
-        </p>
+        <Logo size={64} priority className="mx-auto mb-5" />
+        <h2 className="text-xl font-semibold tracking-tight">No messages yet</h2>
+        <p className="mt-2 text-sm text-[#242424] dark:text-white/40">Send your first SMS request to:</p>
         <button
           type="button"
-          onClick={() => onCopy(endpoint, "Endpoint copied")}
+          onClick={() => onCopy(endpoint, 'Endpoint copied')}
           className="mt-4 inline-flex items-center gap-2 rounded-full border border-gray-400 bg-black/[.055] px-4 py-2 font-mono text-xs font-medium text-accent shadow-sm hover:bg-black/[.08] dark:bg-white/[.075] dark:hover:bg-white/10"
         >
           <Icon name="copy" className="h-3.5 w-3.5" /> POST {endpoint}
@@ -47,7 +42,7 @@ export function EmptyState({
           </pre>
           <button
             type="button"
-            onClick={() => onCopy(command, "cURL copied")}
+            onClick={() => onCopy(command, 'cURL copied')}
             className="absolute right-3 top-3 rounded-lg bg-white p-2 text-black/40 shadow-sm hover:text-accent dark:bg-white/10 dark:text-white/45"
             aria-label="Copy cURL command"
           >

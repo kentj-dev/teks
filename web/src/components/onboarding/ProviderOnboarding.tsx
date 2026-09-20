@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import type { Provider, Theme } from '../../types';
 import { IconButton } from '../ui/IconButton';
+import { Logo } from '../ui/Logo';
 import { ThemeButton } from '../ui/ThemeButton';
 import { AboutStep } from './AboutStep';
 import { EndpointsStep } from './EndpointsStep';
@@ -35,9 +36,7 @@ export function ProviderOnboarding({
       <div className="mx-auto flex min-h-full max-w-4xl flex-col">
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-accent text-base font-bold text-white shadow-sm shadow-accent/20">
-              T
-            </div>
+            <Logo size={40} priority className="shadow-sm" />
             <div>
               <p className="text-sm font-semibold">Teks</p>
               <p className="text-[11px] text-black/40 dark:text-white/35">Local SMS testing</p>
