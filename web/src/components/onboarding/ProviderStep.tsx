@@ -62,7 +62,7 @@ export function ProviderStep({
               onClick={() => choose(item.id)}
               disabled={selecting !== null}
               aria-pressed={current}
-              className={`group relative flex min-h-56 flex-col rounded-2xl border bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-accent hover:shadow-lg hover:shadow-accent/10 disabled:cursor-wait disabled:opacity-70 dark:bg-[#19191b] ${current ? 'border-accent ring-2 ring-accent/15' : 'border-gray-400'}`}
+              className={`group relative flex min-h-56 flex-col rounded-2xl border bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-accent hover:shadow-lg hover:shadow-accent/10 disabled:cursor-wait disabled:opacity-70 dark:bg-[#19191b] ${current ? 'border-accent ring-2 ring-accent/15' : 'border-gray-400 dark:border-gray-600'}`}
             >
               <h2 className="text-lg font-semibold">{item.name}</h2>
               <p className="mt-2 text-xs leading-5 text-black/50 dark:text-white/40">{item.description}</p>

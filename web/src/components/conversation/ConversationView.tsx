@@ -1,22 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react';
 
-import type {
-  Conversation,
-  Message,
-  Provider,
-  Theme,
-  ViewMode,
-} from "../../types";
-import { formatFullDate, formatPhone, formatTime } from "../../utils/format";
-import { Status } from "../Status";
-import { DeveloperMessageCard } from "../messages/DeveloperMessageCard";
-import { EmptyState } from "../states/EmptyState";
-import { LoadingState } from "../states/LoadingState";
-import { NoConversationSelected } from "../states/NoConversationSelected";
-import { Icon } from "../ui/Icon";
-import { IconButton } from "../ui/IconButton";
-import { ThemeButton } from "../ui/ThemeButton";
-import { ViewModeSwitch } from "./ViewModeSwitch";
+import type { Conversation, Message, Provider, Theme, ViewMode } from '../../types';
+import { formatFullDate, formatPhone, formatTime } from '../../utils/format';
+import { Status } from '../Status';
+import { DeveloperMessageCard } from '../messages/DeveloperMessageCard';
+import { EmptyState } from '../states/EmptyState';
+import { LoadingState } from '../states/LoadingState';
+import { NoConversationSelected } from '../states/NoConversationSelected';
+import { Icon } from '../ui/Icon';
+import { IconButton } from '../ui/IconButton';
+import { ThemeButton } from '../ui/ThemeButton';
+import { ViewModeSwitch } from './ViewModeSwitch';
 
 export function ConversationView({
   active,
@@ -46,14 +40,12 @@ export function ConversationView({
   onDeleteConversation: (conversation: Conversation) => void;
 }) {
   const [viewMode, setViewMode] = useState<ViewMode>(() =>
-    window.localStorage.getItem("teks-view-mode") === "developer"
-      ? "developer"
-      : "phone",
+    window.localStorage.getItem('teks-view-mode') === 'developer' ? 'developer' : 'phone',
   );
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    window.localStorage.setItem("teks-view-mode", viewMode);
+    window.localStorage.setItem('teks-view-mode', viewMode);
   }, [viewMode]);
 
   useEffect(() => {
@@ -62,13 +54,13 @@ export function ConversationView({
 
   return (
     <section
-      className={`${active || !hasMessages ? "flex" : "hidden lg:flex"} min-h-0 min-w-0 flex-col overflow-hidden border-x border-gray-300 bg-white dark:bg-[#111113]`}
+      className={`${active || !hasMessages ? 'flex' : 'hidden lg:flex'} min-h-0 min-w-0 flex-col overflow-hidden border-x border-gray-300 dark:border-gray-600 bg-white dark:bg-[#111113]`}
     >
       {loading ? (
         <LoadingState />
       ) : active ? (
         <>
-          <header className="glass z-10 flex h-[72px] shrink-0 items-center justify-between border-b border-gray-300 px-4 sm:px-6">
+          <header className="glass z-10 flex h-[72px] shrink-0 items-center justify-between border-b border-gray-300 dark:border-gray-600 px-4 sm:px-6">
             <div className="flex min-w-0 items-center gap-2">
               <button
                 type="button"
@@ -79,21 +71,14 @@ export function ConversationView({
                 <Icon name="back" />
               </button>
               <div className="min-w-0">
-                <h2 className="truncate text-[16px] font-semibold">
-                  {formatPhone(active.recipient)}
-                </h2>
+                <h2 className="truncate text-[16px] font-semibold">{formatPhone(active.recipient)}</h2>
                 <p className="mt-0.5 text-[11px] text-black/40 dark:text-white/35">
-                  {active.messages.length}{" "}
-                  {active.messages.length === 1 ? "message" : "messages"}
+                  {active.messages.length} {active.messages.length === 1 ? 'message' : 'messages'}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <ThemeButton
-                theme={theme}
-                onChange={onThemeChange}
-                className="xl:hidden"
-              />
+              <ThemeButton theme={theme} onChange={onThemeChange} className="xl:hidden" />
               <ViewModeSwitch mode={viewMode} onChange={setViewMode} />
               <IconButton
                 icon="trash"
@@ -105,11 +90,11 @@ export function ConversationView({
                 icon="copy"
                 label="Copy phone number"
                 tone="blue"
-                onClick={() => onCopy(active.recipient, "Number copied")}
+                onClick={() => onCopy(active.recipient, 'Number copied')}
               />
             </div>
           </header>
-          {viewMode === "phone" ? (
+          {viewMode === 'phone' ? (
             <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto px-4 py-8 sm:px-10">
               <div className="mx-auto flex max-w-3xl flex-col gap-1.5">
                 <p className="mb-5 text-center text-[11px] font-medium uppercase text-black/30 dark:text-white/25">
@@ -118,10 +103,7 @@ export function ConversationView({
                 {active.messages.map((message, index) => {
                   const previous = active.messages[index - 1];
                   const showTime =
-                    !previous ||
-                    Date.parse(message.created_at) -
-                      Date.parse(previous.created_at) >
-                      300000;
+                    !previous || Date.parse(message.created_at) - Date.parse(previous.created_at) > 300000;
                   return (
                     <div key={message.id} className="flex flex-col items-end">
                       {showTime && (
@@ -165,12 +147,7 @@ export function ConversationView({
       ) : hasMessages ? (
         <NoConversationSelected />
       ) : (
-        <EmptyState
-          onCopy={onCopy}
-          theme={theme}
-          onThemeChange={onThemeChange}
-          provider={provider}
-        />
+        <EmptyState onCopy={onCopy} theme={theme} onThemeChange={onThemeChange} provider={provider} />
       )}
       <div className="lg:hidden">
         <Status connected={connected} />

@@ -18,10 +18,10 @@ export function UtilityPanel({
   onChooseProvider: () => void;
 }) {
   return (
-    <aside className="scrollbar-none hidden min-h-0 min-w-0 flex-col overflow-y-auto border-l border-gray-300 bg-[#fafafa] p-5 xl:flex dark:bg-[#19191b]">
+    <aside className="scrollbar-none hidden min-h-0 min-w-0 flex-col overflow-y-auto border-l border-gray-300 dark:border-gray-600 bg-[#fafafa] p-5 xl:flex dark:bg-[#19191b]">
       <section>
         <p className="text-[11px] font-medium uppercase text-[#242424] dark:text-white/30">Teks status</p>
-        <div className="mt-3 rounded-lg border border-gray-400 bg-white p-3 shadow-sm dark:bg-white/[.035]">
+        <div className="mt-3 rounded-lg border border-gray-400 dark:border-gray-600 bg-white p-3 shadow-sm dark:bg-white/[.035]">
           <div className="flex items-center gap-2">
             <span className={`h-2 w-2 rounded-full ${connected ? 'bg-emerald-500' : 'bg-amber-500'}`} />
             <span className="text-sm font-medium">{connected ? 'Running' : 'Reconnecting'}</span>

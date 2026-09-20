@@ -11,7 +11,5 @@ export function Logo({
   className?: string;
   priority?: boolean;
 }) {
-  return (
-    <Image src={logo} alt="Teks" width={size} height={size} layout="fixed" priority={priority} className={className} />
-  );
+  return <Image src={logo} alt="Teks" width={size} height={size} layout="fixed" className={className} />;
 }
