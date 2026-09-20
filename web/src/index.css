@@ -3,17 +3,64 @@
 @tailwind utilities;
 
 @layer base {
-  * { @apply border-black/10 dark:border-white/10; }
-  html { color-scheme: light; }
-  html.dark { color-scheme: dark; }
+  * {
+    @apply border-black/10 dark:border-white/10;
+  }
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
   body {
     @apply m-0 min-w-[320px] overflow-hidden bg-[#f5f5f7] text-ink antialiased dark:bg-[#111113] dark:text-white;
   }
-  button, input { font: inherit; }
-  button { -webkit-tap-highlight-color: transparent; }
-  ::selection { @apply bg-accent/25; }
+  button,
+  input {
+    font: inherit;
+  }
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
+  ::selection {
+    @apply bg-accent/25;
+  }
 }
 
-.glass { @apply bg-white/95 dark:bg-[#1c1c1e]/95; }
-.scrollbar-none { scrollbar-width: none; }
-.scrollbar-none::-webkit-scrollbar { display: none; }
+.glass {
+  @apply bg-white/95 dark:bg-[#1c1c1e]/95;
+}
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Auto-hide scrollbar: visible on hover, hidden otherwise */
+.autohide-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.2s;
+}
+
+.autohide-scrollbar:hover {
+  scrollbar-color: rgba(161, 161, 170, 0.5) transparent;
+}
+
+.autohide-scrollbar::-webkit-scrollbar {
+  @apply w-1.5;
+}
+
+.autohide-scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.autohide-scrollbar::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-transparent;
+  transition: background-color 0.2s;
+}
+
+.autohide-scrollbar:hover::-webkit-scrollbar-thumb {
+  @apply bg-zinc-400/50;
+}
