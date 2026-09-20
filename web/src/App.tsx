@@ -1,8 +1,8 @@
 import {
   BookOpen,
   Check,
-  ChevronDown,
   ChevronLeft,
+  ChevronRight,
   Code2,
   Coffee,
   Copy,
@@ -262,7 +262,7 @@ type IconName =
   | 'info'
   | 'trash'
   | 'back'
-  | 'down'
+  | 'next'
   | 'close'
   | 'check'
   | 'sun'
@@ -281,7 +281,7 @@ const icons: Record<IconName, LucideIcon> = {
   info: Info,
   trash: Trash2,
   back: ChevronLeft,
-  down: ChevronDown,
+  next: ChevronRight,
   close: X,
   check: Check,
   sun: Sun,
@@ -320,6 +320,10 @@ function App() {
   const [provider, setProvider] = useState<Provider>(() => {
     return window.localStorage.getItem('teks-provider') === 'semaphore' ? 'semaphore' : 'rest';
   });
+  const [providerSetupComplete, setProviderSetupComplete] = useState(
+    () => window.localStorage.getItem('teks-provider-setup-complete') === 'true',
+  );
+  const [showProviderSetup, setShowProviderSetup] = useState(() => !providerSetupComplete);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -420,20 +424,31 @@ function App() {
     showToast(label);
   }
 
-  async function changeProvider(nextProvider: Provider) {
+  async function changeProvider(nextProvider: Provider): Promise<boolean> {
     try {
       const response = await fetch('/api/_teks/provider', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ provider: nextProvider }),
       });
-      if (!response.ok) return showToast('Could not change provider');
+      if (!response.ok) {
+        showToast('Could not change provider');
+        return false;
+      }
       const updated = (await response.json()) as ProviderResponse;
       setProvider(updated.provider);
       showToast(`${formatProvider(updated.provider)} selected`);
+      return true;
     } catch {
       showToast('Could not change provider');
+      return false;
     }
+  }
+
+  function completeProviderSetup() {
+    window.localStorage.setItem('teks-provider-setup-complete', 'true');
+    setProviderSetupComplete(true);
+    setShowProviderSetup(false);
   }
 
   async function deleteMessage(message: Message) {
@@ -473,6 +488,22 @@ function App() {
     } else {
       showToast(`Deleted ${deletedIds.size} of ${conversation.messages.length} messages`);
     }
+  }
+
+  if (showProviderSetup) {
+    return (
+      <>
+        <ProviderOnboarding
+          provider={provider}
+          theme={theme}
+          onThemeChange={setTheme}
+          onSelect={changeProvider}
+          onComplete={completeProviderSetup}
+          onClose={providerSetupComplete ? () => setShowProviderSetup(false) : undefined}
+        />
+        {toast && <Toast text={toast} />}
+      </>
+    );
   }
 
   return (
@@ -671,7 +702,7 @@ function App() {
           theme={theme}
           onThemeChange={setTheme}
           provider={provider}
-          onProviderChange={changeProvider}
+          onChooseProvider={() => setShowProviderSetup(true)}
         />
       </section>
 
@@ -683,12 +714,283 @@ function App() {
           onDelete={deleteMessage}
         />
       )}
-      {toast && (
-        <div className="fixed bottom-7 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full bg-[#252527] px-4 py-2 text-sm font-medium text-white shadow-xl">
-          <Icon name="check" className="h-4 w-4 text-emerald-400" />
-          {toast}
-        </div>
-      )}
+      {toast && <Toast text={toast} />}
+    </main>
+  );
+}
+
+function Toast({ text }: { text: string }) {
+  return (
+    <div className="fixed bottom-7 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full bg-[#252527] px-4 py-2 text-sm font-medium text-white shadow-xl">
+      <Icon name="check" className="h-4 w-4 text-emerald-400" />
+      {text}
+    </div>
+  );
+}
+
+function ProviderOnboarding({
+  provider,
+  theme,
+  onThemeChange,
+  onSelect,
+  onComplete,
+  onClose,
+}: {
+  provider: Provider;
+  theme: Theme;
+  onThemeChange: (theme: Theme) => void;
+  onSelect: (provider: Provider) => Promise<boolean>;
+  onComplete: () => void;
+  onClose?: () => void;
+}) {
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [selecting, setSelecting] = useState<Provider | null>(null);
+  const providers: Array<{
+    id: Provider;
+    name: string;
+    description: string;
+    endpoint: string;
+    icon: IconName;
+  }> = [
+    {
+      id: 'rest',
+      name: 'REST API',
+      description: 'Use Teks’ native JSON API for local SMS capture.',
+      endpoint: '/api/messages',
+      icon: 'developer',
+    },
+    {
+      id: 'semaphore',
+      name: 'Semaphore',
+      description: 'Use Semaphore-compatible endpoints with your existing integration.',
+      endpoint: '/api/v4/messages',
+      icon: 'phone',
+    },
+  ];
+  const selectedEndpoints = provider === 'semaphore' ? semaphoreApiEndpoints : restApiEndpoints;
+  const stepLabels = ['About Teks', 'Provider', 'Get started'];
+
+  async function choose(nextProvider: Provider) {
+    setSelecting(nextProvider);
+    const selected = await onSelect(nextProvider);
+    setSelecting(null);
+    if (selected) setStep(3);
+  }
+
+  return (
+    <main className="h-dvh overflow-y-auto bg-[#f2f2f2] px-5 py-8 dark:bg-[#0d0d0f] sm:px-8">
+      <div className="mx-auto flex min-h-full max-w-4xl flex-col">
+        <header className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-accent text-base font-bold text-white shadow-sm shadow-accent/20">
+              T
+            </div>
+            <div>
+              <p className="text-sm font-semibold">Teks</p>
+              <p className="text-[11px] text-black/40 dark:text-white/35">Local SMS testing</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <ThemeButton theme={theme} onChange={onThemeChange} />
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-full p-2 text-black/45 hover:bg-black/5 hover:text-black dark:text-white/40 dark:hover:bg-white/10 dark:hover:text-white"
+                aria-label="Close provider selection"
+              >
+                <Icon name="close" className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </header>
+
+        <nav className="mx-auto mt-10 w-full max-w-2xl" aria-label="Setup progress">
+          <ol className="grid grid-cols-3">
+            {stepLabels.map((label, index) => {
+              const number = (index + 1) as 1 | 2 | 3;
+              const isComplete = number < step;
+              const isActive = number === step;
+              return (
+                <li key={label} className="relative flex flex-col items-center text-center">
+                  {index > 0 && (
+                    <span
+                      className={`absolute right-1/2 top-4 h-px w-full ${number <= step ? 'bg-accent' : 'bg-black/10 dark:bg-white/10'}`}
+                    />
+                  )}
+                  <span
+                    className={`relative z-10 grid h-8 w-8 place-items-center rounded-full border text-xs font-semibold ${isComplete || isActive ? 'border-accent bg-accent text-white' : 'border-black/15 bg-[#f2f2f2] text-black/35 dark:border-white/15 dark:bg-[#0d0d0f] dark:text-white/30'}`}
+                  >
+                    {isComplete ? <Icon name="check" className="h-3.5 w-3.5" /> : number}
+                  </span>
+                  <span
+                    className={`mt-2 text-[10px] font-medium sm:text-xs ${isActive ? 'text-black dark:text-white' : 'text-black/35 dark:text-white/30'}`}
+                  >
+                    {label}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </nav>
+
+        <section className="my-auto py-10 sm:py-14">
+          {step === 1 && (
+            <div className="mx-auto max-w-2xl">
+              <div className="text-center">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Step 1</p>
+                <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">What&apos;s Teks?</h1>
+                <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-black/55 dark:text-white/45">
+                  Teks is a local SMS testing inbox. It captures the messages your application tries to send so you can build and debug messaging flows without contacting a real provider or delivering a real SMS.
+                </p>
+              </div>
+
+              <div className="mt-9 grid gap-3 sm:grid-cols-3">
+                {[
+                  ['Capture locally', 'Point your application at Teks and keep every test message on your machine.', 'developer' as IconName],
+                  ['Inspect instantly', 'See recipients, content, provider details, and raw request data in one inbox.', 'search' as IconName],
+                  ['Test safely', 'Exercise OTP and messaging flows without credits, devices, or external requests.', 'check' as IconName],
+                ].map(([title, description, icon]) => (
+                  <div key={title} className="rounded-2xl border border-gray-400 bg-white p-4 shadow-sm dark:bg-[#19191b]">
+                    <span className="grid h-9 w-9 place-items-center rounded-lg bg-accent/10 text-accent">
+                      <Icon name={icon as IconName} className="h-4 w-4" />
+                    </span>
+                    <h2 className="mt-4 text-sm font-semibold">{title}</h2>
+                    <p className="mt-2 text-xs leading-5 text-black/45 dark:text-white/40">{description}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-8 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent/20 hover:brightness-105"
+                >
+                  Continue
+                  <Icon name="next" className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div>
+              <div className="mx-auto max-w-2xl text-center">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Step 2</p>
+                <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">What&apos;s your provider?</h1>
+                <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-black/50 dark:text-white/45">
+                  Choose the API your application uses. Only the selected provider&apos;s endpoints will accept requests.
+                </p>
+              </div>
+
+              <div className="mx-auto mt-9 grid max-w-2xl gap-4 sm:grid-cols-2">
+                {providers.map((item) => {
+                  const isCurrent = item.id === provider;
+                  const isSelecting = item.id === selecting;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => choose(item.id)}
+                      disabled={selecting !== null}
+                      aria-pressed={isCurrent}
+                      className={`group relative flex min-h-56 flex-col rounded-2xl border bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-accent hover:shadow-lg hover:shadow-accent/10 disabled:cursor-wait disabled:opacity-70 dark:bg-[#19191b] ${isCurrent ? 'border-accent ring-2 ring-accent/15' : 'border-gray-400'}`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="grid h-11 w-11 place-items-center rounded-xl bg-accent/10 text-accent">
+                          <Icon name={item.icon} className="h-5 w-5" />
+                        </span>
+                        {isCurrent && (
+                          <span className="rounded-full bg-accent/10 px-2.5 py-1 text-[10px] font-semibold text-accent">
+                            Current
+                          </span>
+                        )}
+                      </div>
+                      <h2 className="mt-5 text-lg font-semibold">{item.name}</h2>
+                      <p className="mt-2 text-xs leading-5 text-black/50 dark:text-white/40">{item.description}</p>
+                      <div className="mt-auto flex items-center justify-between gap-3 pt-5">
+                        <code className="text-[10px] text-black/40 dark:text-white/35">{item.endpoint}</code>
+                        <span className="flex items-center gap-1 text-xs font-medium text-accent">
+                          {isSelecting ? 'Selecting…' : 'Choose'}
+                          {!isSelecting && <Icon name="next" className="h-3.5 w-3.5" />}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="mx-auto mt-7 flex items-center gap-1.5 text-xs font-medium text-black/45 hover:text-black dark:text-white/40 dark:hover:text-white"
+              >
+                <Icon name="back" className="h-3.5 w-3.5" />
+                Back
+              </button>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="mx-auto max-w-2xl">
+              <div className="text-center">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Step 3</p>
+                <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+                  {formatProvider(provider)} endpoints
+                </h1>
+                <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-black/50 dark:text-white/45">
+                  Your server is ready. Use these endpoints at <code className="text-accent">{window.location.origin}</code>.
+                </p>
+              </div>
+
+              <div className="mt-8 max-h-[38vh] space-y-2 overflow-y-auto rounded-2xl border border-gray-400 bg-white p-2 shadow-sm dark:bg-[#19191b]">
+                {selectedEndpoints.map((apiEndpoint) => (
+                  <div
+                    key={`${apiEndpoint.method}-${apiEndpoint.path}`}
+                    className="flex items-start gap-3 rounded-xl border border-transparent px-3 py-2.5 hover:border-black/5 hover:bg-black/[.02] dark:hover:border-white/5 dark:hover:bg-white/[.025]"
+                  >
+                    <span
+                      className={`mt-0.5 w-11 shrink-0 font-mono text-[10px] font-semibold ${apiEndpoint.method === 'GET' ? 'text-blue-600 dark:text-blue-400' : apiEndpoint.method === 'POST' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}
+                    >
+                      {apiEndpoint.method}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <code className="block break-all text-xs font-medium">{apiEndpoint.path}</code>
+                      <span className="mt-1 block text-[10px] leading-4 text-black/40 dark:text-white/35">
+                        {apiEndpoint.description}
+                      </span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-8 flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="flex items-center gap-1.5 rounded-xl border border-gray-400 bg-white px-4 py-2.5 text-sm font-medium shadow-sm hover:bg-black/[.025] dark:bg-[#19191b] dark:hover:bg-white/[.04]"
+                >
+                  <Icon name="back" className="h-4 w-4" />
+                  Back
+                </button>
+                <button
+                  type="button"
+                  onClick={onComplete}
+                  className="flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent/20 hover:brightness-105"
+                >
+                  Get started
+                  <Icon name="next" className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+
+        <p className="pb-2 text-center text-[11px] text-black/35 dark:text-white/30">
+          You can revisit setup later from Teks Status.
+        </p>
+      </div>
     </main>
   );
 }
@@ -864,13 +1166,13 @@ function UtilityPanel({
   theme,
   onThemeChange,
   provider,
-  onProviderChange,
+  onChooseProvider,
 }: {
   connected: boolean;
   theme: Theme;
   onThemeChange: (theme: Theme) => void;
   provider: Provider;
-  onProviderChange: (provider: Provider) => void;
+  onChooseProvider: () => void;
 }) {
   const [selectedEndpoint, setSelectedEndpoint] = useState<string | null>(null);
   const endpoints = provider === 'semaphore' ? semaphoreApiEndpoints : restApiEndpoints;
@@ -888,23 +1190,23 @@ function UtilityPanel({
           </div>
           <p className="mt-2 font-mono text-[10px] text-black/40 dark:text-white/35">{window.location.host}</p>
         </div>
-        <label className="mt-4 block">
-          <span className="text-[11px] font-medium uppercase text-[#242424] dark:text-white/30">Provider</span>
-          <span className="relative mt-2 block">
-            <select
-              value={provider}
-              onChange={(event) => onProviderChange(event.target.value as Provider)}
-              className="h-10 w-full appearance-none rounded-lg border border-gray-400 bg-white px-3 pr-10 text-xs font-medium text-black shadow-sm outline-none ring-accent/20 focus:border-accent focus:ring-2 dark:bg-[#202023] dark:text-white"
-            >
-              <option value="rest">REST API</option>
-              <option value="semaphore">Semaphore</option>
-            </select>
-            <Icon
-              name="down"
-              className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black/55 dark:text-white/55"
-            />
-          </span>
-        </label>
+        <div className="mt-4">
+          <p className="text-[11px] font-medium uppercase text-[#242424] dark:text-white/30">Provider</p>
+          <button
+            type="button"
+            onClick={onChooseProvider}
+            className="mt-2 flex w-full items-center gap-3 rounded-lg border border-gray-400 bg-white p-3 text-left shadow-sm hover:border-accent hover:bg-black/[.02] dark:bg-white/[.035] dark:hover:bg-white/[.055]"
+          >
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-accent/10 text-accent">
+              <Icon name={provider === 'semaphore' ? 'phone' : 'developer'} className="h-4 w-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-xs font-medium">{formatProvider(provider)}</span>
+              <span className="mt-0.5 block text-[10px] text-black/40 dark:text-white/30">Change provider</span>
+            </span>
+            <Icon name="next" className="h-4 w-4 text-black/25 dark:text-white/25" />
+          </button>
+        </div>
       </div>
 
       <div className="mt-7">
@@ -1061,13 +1363,13 @@ function EmptyState({
         <p className="mt-2 text-sm text-[#242424] dark:text-white/40">Send your first SMS request to:</p>
         <button
           onClick={() => onCopy(endpoint, 'Endpoint copied')}
-          className="mt-4 inline-flex items-center gap-2 rounded-full bg-black/[.055] px-4 py-2 font-mono text-xs font-medium text-accent hover:bg-black/[.08] dark:bg-white/[.075] dark:hover:bg-white/10"
+          className="mt-4 inline-flex border border-gray-400 shadow-sm items-center gap-2 rounded-full bg-black/[.055] px-4 py-2 font-mono text-xs font-medium text-accent hover:bg-black/[.08] dark:bg-white/[.075] dark:hover:bg-white/10"
         >
           <Icon name="copy" className="h-3.5 w-3.5" />
           POST {endpoint}
         </button>
         <div className="relative mt-7 text-left">
-          <pre className="scrollbar-none overflow-x-auto rounded-2xl border bg-[#f5f5f7] p-4 pr-12 text-[11px] leading-5 text-black/65 dark:bg-[#1c1c1e] dark:text-white/60">
+          <pre className="scrollbar-none overflow-x-auto rounded-2xl border border-gray-400 shadow-sm bg-[#f5f5f7] p-4 pr-12 text-[11px] leading-5 text-black/65 dark:bg-[#1c1c1e] dark:text-white/60">
             <code>{command}</code>
           </pre>
           <button

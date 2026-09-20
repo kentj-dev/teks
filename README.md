@@ -34,9 +34,10 @@ Start directly in Semaphore mode with:
 teks --semaphore
 ```
 
-Plain `teks` starts in REST API mode. The provider dropdown can switch the running server between
-the two modes. Only the selected provider's public endpoints are enabled; requests to the other
-provider return a `409 Conflict` response explaining which endpoints can be used.
+Plain `teks` starts in REST API mode. The first-use provider setup and the Change provider button
+can switch the running server between the two modes. Only the selected provider's public endpoints
+are enabled; requests to the other provider return a `409 Conflict` response explaining which
+endpoints can be used.
 
 ```bash
 curl --data \
