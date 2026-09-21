@@ -64,3 +64,116 @@
 .autohide-scrollbar:hover::-webkit-scrollbar-thumb {
   @apply bg-zinc-400/50;
 }
+
+html[data-font-size="compact"] {
+  --teks-text-9: 9px;
+  --teks-text-10: 10px;
+  --teks-text-11: 11px;
+  --teks-text-xs: 12px;
+  --teks-text-13: 13px;
+  --teks-text-sm: 14px;
+  --teks-text-15: 15px;
+  --teks-text-base: 16px;
+  --teks-text-lg: 18px;
+  --teks-text-xl: 20px;
+  --teks-text-3xl: 30px;
+  --teks-text-4xl: 36px;
+}
+
+html[data-font-size="normal"] {
+  --teks-text-9: 10.8px;
+  --teks-text-10: 12px;
+  --teks-text-11: 13.2px;
+  --teks-text-xs: 14.4px;
+  --teks-text-13: 15.6px;
+  --teks-text-sm: 16.8px;
+  --teks-text-15: 18px;
+  --teks-text-base: 19.2px;
+  --teks-text-lg: 21.6px;
+  --teks-text-xl: 24px;
+  --teks-text-3xl: 36px;
+  --teks-text-4xl: 43.2px;
+}
+
+html[data-font-size="zoomed"] {
+  --teks-text-9: 12.6px;
+  --teks-text-10: 14px;
+  --teks-text-11: 15.4px;
+  --teks-text-xs: 16.8px;
+  --teks-text-13: 18.2px;
+  --teks-text-sm: 19.6px;
+  --teks-text-15: 21px;
+  --teks-text-base: 22.4px;
+  --teks-text-lg: 25.2px;
+  --teks-text-xl: 28px;
+  --teks-text-3xl: 42px;
+  --teks-text-4xl: 50.4px;
+}
+
+html[data-font-size] body {
+  font-size: var(--teks-text-base);
+}
+
+html[data-font-size] .text-\[9px\] {
+  font-size: var(--teks-text-9);
+}
+
+html[data-font-size] .text-\[10px\] {
+  font-size: var(--teks-text-10);
+}
+
+html[data-font-size] .text-\[11px\] {
+  font-size: var(--teks-text-11);
+}
+
+html[data-font-size] .text-xs {
+  font-size: var(--teks-text-xs);
+}
+
+html[data-font-size] .text-\[13px\] {
+  font-size: var(--teks-text-13);
+}
+
+html[data-font-size] .text-sm {
+  font-size: var(--teks-text-sm);
+}
+
+html[data-font-size] .text-\[15px\] {
+  font-size: var(--teks-text-15);
+}
+
+html[data-font-size] .text-base,
+html[data-font-size] .text-\[16px\] {
+  font-size: var(--teks-text-base);
+}
+
+html[data-font-size] .text-lg {
+  font-size: var(--teks-text-lg);
+}
+
+html[data-font-size] .text-xl {
+  font-size: var(--teks-text-xl);
+}
+
+html[data-font-size] .text-3xl {
+  font-size: var(--teks-text-3xl);
+}
+
+html[data-font-size] .text-4xl {
+  font-size: var(--teks-text-4xl);
+}
+
+html[data-font-size] .text-3xl,
+html[data-font-size] .text-4xl {
+  line-height: 1.2;
+}
+
+@media (min-width: 640px) {
+  html[data-font-size] .sm\:text-xs {
+    font-size: var(--teks-text-xs);
+  }
+
+  html[data-font-size] .sm\:text-4xl {
+    font-size: var(--teks-text-4xl);
+  }
+}

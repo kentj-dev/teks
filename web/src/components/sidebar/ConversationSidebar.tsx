@@ -93,7 +93,7 @@ export function ConversationSidebar({
               key={conversation.recipient}
               type="button"
               onClick={() => onSelect(conversation.recipient)}
-              className={`group mb-2 w-full rounded-lg border border-gray-400 dark:border-gray-600 px-3 py-3 text-left shadow-sm ${selected ? 'bg-accent text-white' : 'hover:bg-black/[.04] dark:hover:bg-white/[.05]'}`}
+              className={`group mb-2 w-full rounded-lg border border-gray-400 dark:border-gray-600 px-3 py-3 text-left shadow-sm ${selected ? 'bg-accent dark:bg-blue-900 dark:border-blue-500 text-white' : 'hover:bg-black/[.04] dark:hover:bg-white/[.05]'}`}
             >
               <div className="flex items-baseline justify-between gap-3">
                 <span className="truncate text-[15px] font-semibold">{formatPhone(conversation.recipient)}</span>

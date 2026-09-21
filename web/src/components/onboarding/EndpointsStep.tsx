@@ -20,7 +20,7 @@ export function EndpointsStep({
           Your server is ready. Use these endpoints at <code className="text-accent">{window.location.origin}</code>.
         </p>
       </div>
-      <div className="mt-8 max-h-[38vh] space-y-2 overflow-y-auto rounded-2xl border border-gray-400 dark:border-gray-600 bg-white p-2 shadow-sm dark:bg-[#19191b]">
+      <div className="mt-8 max-h-[38vh] space-y-2 overflow-y-auto autohide-scrollbar rounded-2xl border border-gray-400 dark:border-gray-600 bg-white p-2 shadow-sm dark:bg-[#19191b]">
         {endpointsFor(provider).map((endpoint) => (
           <div
             key={`${endpoint.method}-${endpoint.path}`}

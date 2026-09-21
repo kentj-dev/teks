@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef } from 'react';
 
 import type { Conversation, Message, MessageSortOrder, Provider, Theme, ViewMode } from '../../types';
 import { formatFullDate, formatPhone, formatTime } from '../../utils/format';
@@ -10,8 +10,6 @@ import { NoConversationSelected } from '../states/NoConversationSelected';
 import { Icon } from '../ui/Icon';
 import { IconButton } from '../ui/IconButton';
 import { ThemeButton } from '../ui/ThemeButton';
-import { MessageSortSelect } from './MessageSortSelect';
-import { ViewModeSwitch } from './ViewModeSwitch';
 
 export function ConversationView({
   active,
@@ -20,6 +18,8 @@ export function ConversationView({
   connected,
   theme,
   provider,
+  sortOrder,
+  viewMode,
   onThemeChange,
   onBack,
   onSelectMessage,
@@ -33,6 +33,8 @@ export function ConversationView({
   connected: boolean;
   theme: Theme;
   provider: Provider;
+  sortOrder: MessageSortOrder;
+  viewMode: ViewMode;
   onThemeChange: (theme: Theme) => void;
   onBack: () => void;
   onSelectMessage: (message: Message) => void;
@@ -40,12 +42,6 @@ export function ConversationView({
   onDeleteMessage: (message: Message) => void;
   onDeleteConversation: (conversation: Conversation) => void;
 }) {
-  const [viewMode, setViewMode] = useState<ViewMode>(() =>
-    window.localStorage.getItem('teks-view-mode') === 'developer' ? 'developer' : 'phone',
-  );
-  const [sortOrder, setSortOrder] = useState<MessageSortOrder>(() =>
-    window.localStorage.getItem('teks-message-sort') === 'newest' ? 'newest' : 'oldest',
-  );
   const messageListRef = useRef<HTMLDivElement>(null);
 
   const sortedMessages = useMemo(() => {
@@ -55,14 +51,6 @@ export function ConversationView({
       return sortOrder === 'newest' ? -difference : difference;
     });
   }, [active, sortOrder]);
-
-  useEffect(() => {
-    window.localStorage.setItem('teks-view-mode', viewMode);
-  }, [viewMode]);
-
-  useEffect(() => {
-    window.localStorage.setItem('teks-message-sort', sortOrder);
-  }, [sortOrder]);
 
   useLayoutEffect(() => {
     const messageList = messageListRef.current;
@@ -90,15 +78,13 @@ export function ConversationView({
               </button>
               <div className="min-w-0">
                 <h2 className="truncate text-[16px] font-semibold">{formatPhone(active.recipient)}</h2>
-                <p className="mt-0.5 text-[11px] text-black/40 dark:text-white/35">
+                <p className="text-[11px] text-black/40 dark:text-white/35">
                   {active.messages.length} {active.messages.length === 1 ? 'message' : 'messages'}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <ThemeButton theme={theme} onChange={onThemeChange} className="xl:hidden" />
-              <MessageSortSelect order={sortOrder} onChange={setSortOrder} />
-              <ViewModeSwitch mode={viewMode} onChange={setViewMode} />
               <IconButton
                 icon="trash"
                 label={`Delete conversation with ${active.recipient}`}
@@ -114,10 +100,7 @@ export function ConversationView({
             </div>
           </header>
           {viewMode === 'phone' ? (
-            <div
-              ref={messageListRef}
-              className="scrollbar-none min-h-0 flex-1 overflow-y-auto px-4 py-8 sm:px-10"
-            >
+            <div ref={messageListRef} className="scrollbar-none min-h-0 flex-1 overflow-y-auto px-4 py-8 sm:px-10">
               <div className="mx-auto flex max-w-3xl flex-col gap-1.5">
                 <p className="mb-5 text-center text-[11px] font-medium uppercase text-black/30 dark:text-white/25">
                   Captured by Teks
@@ -149,10 +132,7 @@ export function ConversationView({
               </div>
             </div>
           ) : (
-            <div
-              ref={messageListRef}
-              className="scrollbar-none min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6"
-            >
+            <div ref={messageListRef} className="scrollbar-none min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">
               <div className="mx-auto max-w-4xl space-y-4">
                 {sortedMessages.map((message, index) => (
                   <DeveloperMessageCard

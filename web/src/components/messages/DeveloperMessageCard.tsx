@@ -34,7 +34,7 @@ export function DeveloperMessageCard({
             {formatFullDate(message.created_at)}
           </p>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <IconButton
             icon="copy"
             label="Copy message UUID"

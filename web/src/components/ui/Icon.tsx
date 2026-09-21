@@ -1,4 +1,5 @@
 import {
+  ALargeSmall,
   ArrowUpDown,
   BookOpen,
   Check,
@@ -38,6 +39,7 @@ export type IconName =
   | "external"
   | "phone"
   | "developer"
+  | "font-size"
   | "sort";
 
 const icons: Record<IconName, LucideIcon> = {
@@ -58,6 +60,7 @@ const icons: Record<IconName, LucideIcon> = {
   external: ExternalLink,
   phone: Smartphone,
   developer: Code2,
+  "font-size": ALargeSmall,
   sort: ArrowUpDown,
 };
 

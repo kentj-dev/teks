@@ -1,19 +1,31 @@
-import type { Provider, Theme } from '../../types';
-import { AppearanceSelector } from './AppearanceSelector';
+import type { FontSize, MessageSortOrder, Provider, Theme, ViewMode } from '../../types';
 import { EndpointList } from './EndpointList';
 import { ProviderCard } from './ProviderCard';
 import { QuickLinks } from './QuickLinks';
+import { SettingsSection } from './SettingsSection';
 
 export function UtilityPanel({
   connected,
   theme,
+  fontSize,
+  sortOrder,
+  viewMode,
   onThemeChange,
+  onFontSizeChange,
+  onSortOrderChange,
+  onViewModeChange,
   provider,
   onChooseProvider,
 }: {
   connected: boolean;
   theme: Theme;
+  fontSize: FontSize;
+  sortOrder: MessageSortOrder;
+  viewMode: ViewMode;
   onThemeChange: (theme: Theme) => void;
+  onFontSizeChange: (fontSize: FontSize) => void;
+  onSortOrderChange: (sortOrder: MessageSortOrder) => void;
+  onViewModeChange: (viewMode: ViewMode) => void;
   provider: Provider;
   onChooseProvider: () => void;
 }) {
@@ -30,9 +42,18 @@ export function UtilityPanel({
         </div>
       </section>
       <ProviderCard provider={provider} onChoose={onChooseProvider} />
-      <AppearanceSelector theme={theme} onChange={onThemeChange} />
-      <QuickLinks />
       <EndpointList provider={provider} />
+      <SettingsSection
+        fontSize={fontSize}
+        sortOrder={sortOrder}
+        theme={theme}
+        viewMode={viewMode}
+        onThemeChange={onThemeChange}
+        onFontSizeChange={onFontSizeChange}
+        onSortOrderChange={onSortOrderChange}
+        onViewModeChange={onViewModeChange}
+      />
+      <QuickLinks />
       <footer className="mt-auto pt-4 text-[10px] text-black/30 dark:text-white/25">
         <p>Teks 0.1.0</p>
         <p className="mt-1">Local SMS testing for developers.</p>
