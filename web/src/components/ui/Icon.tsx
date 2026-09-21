@@ -1,4 +1,5 @@
 import {
+  ArrowUpDown,
   BookOpen,
   Check,
   ChevronLeft,
@@ -36,7 +37,8 @@ export type IconName =
   | "coffee"
   | "external"
   | "phone"
-  | "developer";
+  | "developer"
+  | "sort";
 
 const icons: Record<IconName, LucideIcon> = {
   search: Search,
@@ -56,6 +58,7 @@ const icons: Record<IconName, LucideIcon> = {
   external: ExternalLink,
   phone: Smartphone,
   developer: Code2,
+  sort: ArrowUpDown,
 };
 
 export function Icon({

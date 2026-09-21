@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import type { Conversation, Message, Provider, Theme, ViewMode } from '../../types';
+import type { Conversation, Message, MessageSortOrder, Provider, Theme, ViewMode } from '../../types';
 import { formatFullDate, formatPhone, formatTime } from '../../utils/format';
 import { Status } from '../Status';
 import { DeveloperMessageCard } from '../messages/DeveloperMessageCard';
@@ -10,6 +10,7 @@ import { NoConversationSelected } from '../states/NoConversationSelected';
 import { Icon } from '../ui/Icon';
 import { IconButton } from '../ui/IconButton';
 import { ThemeButton } from '../ui/ThemeButton';
+import { MessageSortSelect } from './MessageSortSelect';
 import { ViewModeSwitch } from './ViewModeSwitch';
 
 export function ConversationView({
@@ -42,15 +43,32 @@ export function ConversationView({
   const [viewMode, setViewMode] = useState<ViewMode>(() =>
     window.localStorage.getItem('teks-view-mode') === 'developer' ? 'developer' : 'phone',
   );
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const [sortOrder, setSortOrder] = useState<MessageSortOrder>(() =>
+    window.localStorage.getItem('teks-message-sort') === 'newest' ? 'newest' : 'oldest',
+  );
+  const messageListRef = useRef<HTMLDivElement>(null);
+
+  const sortedMessages = useMemo(() => {
+    if (!active) return [];
+    return [...active.messages].sort((a, b) => {
+      const difference = Date.parse(a.created_at) - Date.parse(b.created_at);
+      return sortOrder === 'newest' ? -difference : difference;
+    });
+  }, [active, sortOrder]);
 
   useEffect(() => {
     window.localStorage.setItem('teks-view-mode', viewMode);
   }, [viewMode]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView();
-  }, [active?.messages.length, active?.recipient]);
+    window.localStorage.setItem('teks-message-sort', sortOrder);
+  }, [sortOrder]);
+
+  useLayoutEffect(() => {
+    const messageList = messageListRef.current;
+    if (!messageList) return;
+    messageList.scrollTop = 0;
+  }, [active?.messages.length, active?.recipient, sortOrder, viewMode]);
 
   return (
     <section
@@ -79,6 +97,7 @@ export function ConversationView({
             </div>
             <div className="flex items-center gap-1">
               <ThemeButton theme={theme} onChange={onThemeChange} className="xl:hidden" />
+              <MessageSortSelect order={sortOrder} onChange={setSortOrder} />
               <ViewModeSwitch mode={viewMode} onChange={setViewMode} />
               <IconButton
                 icon="trash"
@@ -95,15 +114,18 @@ export function ConversationView({
             </div>
           </header>
           {viewMode === 'phone' ? (
-            <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto px-4 py-8 sm:px-10">
+            <div
+              ref={messageListRef}
+              className="scrollbar-none min-h-0 flex-1 overflow-y-auto px-4 py-8 sm:px-10"
+            >
               <div className="mx-auto flex max-w-3xl flex-col gap-1.5">
                 <p className="mb-5 text-center text-[11px] font-medium uppercase text-black/30 dark:text-white/25">
                   Captured by Teks
                 </p>
-                {active.messages.map((message, index) => {
-                  const previous = active.messages[index - 1];
+                {sortedMessages.map((message, index) => {
+                  const previous = sortedMessages[index - 1];
                   const showTime =
-                    !previous || Date.parse(message.created_at) - Date.parse(previous.created_at) > 300000;
+                    !previous || Math.abs(Date.parse(message.created_at) - Date.parse(previous.created_at)) > 300000;
                   return (
                     <div key={message.id} className="flex flex-col items-end">
                       {showTime && (
@@ -124,22 +146,23 @@ export function ConversationView({
                     </div>
                   );
                 })}
-                <div ref={bottomRef} />
               </div>
             </div>
           ) : (
-            <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">
+            <div
+              ref={messageListRef}
+              className="scrollbar-none min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6"
+            >
               <div className="mx-auto max-w-4xl space-y-4">
-                {active.messages.map((message, index) => (
+                {sortedMessages.map((message, index) => (
                   <DeveloperMessageCard
                     key={message.id}
                     message={message}
-                    number={index + 1}
+                    number={sortOrder === 'newest' ? active.messages.length - index : index + 1}
                     onCopy={onCopy}
                     onDelete={onDeleteMessage}
                   />
                 ))}
-                <div ref={bottomRef} />
               </div>
             </div>
           )}

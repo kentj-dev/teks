@@ -19,6 +19,7 @@ export type Conversation = {
 
 export type Theme = "light" | "dark";
 export type ViewMode = "phone" | "developer";
+export type MessageSortOrder = "newest" | "oldest";
 export type Provider = "rest" | "semaphore";
 export type ProviderResponse = { provider: Provider };
 
