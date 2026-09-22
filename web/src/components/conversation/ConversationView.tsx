@@ -76,9 +76,9 @@ export function ConversationView({
               >
                 <Icon name="back" />
               </button>
-              <div className="min-w-0">
+              <div className="min-w-0 leading-none">
                 <h2 className="truncate text-[16px] font-semibold">{formatPhone(active.recipient)}</h2>
-                <p className="text-[11px] text-black/40 dark:text-white/35">
+                <p className="mt-0.5 text-[11px] text-black/40 dark:text-white/35">
                   {active.messages.length} {active.messages.length === 1 ? 'message' : 'messages'}
                 </p>
               </div>

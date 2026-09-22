@@ -19,7 +19,9 @@ import { formatProvider } from './utils/format';
 
 function App() {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [selectedRecipient, setSelectedRecipient] = useState<string | null>(null);
+  const [selectedRecipient, setSelectedRecipient] = useState<string | null>(() =>
+    new URLSearchParams(window.location.search).get('contact'),
+  );
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
@@ -86,7 +88,11 @@ function App() {
       })
       .then((loadedMessages) => {
         setMessages(loadedMessages);
-        setSelectedRecipient(loadedMessages[0]?.to ?? null);
+        setSelectedRecipient((current) =>
+          current && loadedMessages.some((message) => message.to === current)
+            ? current
+            : (loadedMessages[0]?.to ?? null),
+        );
       })
       .catch(() => toast.error('Could not load messages'))
       .finally(() => setLoading(false));
@@ -103,10 +109,22 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (loading) return;
     if (selectedRecipient && !messages.some((message) => message.to === selectedRecipient)) {
       setSelectedRecipient(messages[0]?.to ?? null);
     }
-  }, [messages, selectedRecipient]);
+  }, [loading, messages, selectedRecipient]);
+
+  useEffect(() => {
+    if (loading) return;
+    const url = new URL(window.location.href);
+    if (selectedRecipient) {
+      url.searchParams.set('contact', selectedRecipient);
+    } else {
+      url.searchParams.delete('contact');
+    }
+    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+  }, [loading, selectedRecipient]);
 
   const active = useMemo<Conversation | null>(() => {
     if (!selectedRecipient) return null;
