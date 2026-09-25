@@ -32,22 +32,26 @@ export function EmptyState({
         <button
           type="button"
           onClick={() => onCopy(endpoint, 'Endpoint copied')}
-          className="mt-4 inline-flex max-w-full items-center gap-2 break-all rounded-full border border-gray-400 dark:border-gray-600 bg-black/[.055] px-4 py-2 font-mono text-xs font-medium text-accent shadow-sm hover:bg-black/[.08] dark:bg-white/[.075] dark:hover:bg-white/10"
+          className="mt-4 flex w-full items-start gap-2.5 rounded-xl border border-gray-400 bg-black/[.055] px-4 py-2.5 text-left font-mono text-xs font-medium text-accent shadow-sm hover:bg-black/[.08] dark:border-gray-600 dark:bg-white/[.075] dark:hover:bg-white/10"
         >
-          <Icon name="copy" className="h-3.5 w-3.5 shrink-0" /> POST {endpoint}
+          <Icon name="copy" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span className="min-w-0 break-words">POST {endpoint}</span>
         </button>
-        <div className="relative mt-7 text-left">
-          <pre className="scrollbar-none overflow-x-auto rounded-2xl border border-gray-400 dark:border-gray-600 bg-[#f5f5f7] p-4 pr-12 text-[11px] leading-5 text-black/65 shadow-sm dark:bg-[#1c1c1e] dark:text-white/60">
+        <div className="mt-5 overflow-hidden rounded-2xl border border-gray-400 bg-[#f5f5f7] text-left shadow-sm dark:border-gray-600 dark:bg-[#1c1c1e]">
+          <div className="flex items-center justify-between border-b border-gray-300 px-4 py-2 dark:border-gray-600">
+            <span className="text-[11px] font-medium text-black/45 dark:text-white/40">cURL</span>
+            <button
+              type="button"
+              onClick={() => onCopy(command, 'cURL copied')}
+              className="flex items-center gap-1 text-[11px] font-medium text-accent hover:underline"
+            >
+              <Icon name="copy" className="h-3.5 w-3.5" />
+              Copy
+            </button>
+          </div>
+          <pre className="whitespace-pre-wrap break-words p-4 text-[11px] leading-5 text-black/65 dark:text-white/60">
             <code>{command}</code>
           </pre>
-          <button
-            type="button"
-            onClick={() => onCopy(command, 'cURL copied')}
-            className="absolute right-3 top-3 rounded-lg bg-white p-2 text-black/40 shadow-sm hover:text-accent dark:bg-white/10 dark:text-white/45"
-            aria-label="Copy cURL command"
-          >
-            <Icon name="copy" className="h-4 w-4" />
-          </button>
         </div>
       </div>
     </div>
