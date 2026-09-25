@@ -32,14 +32,19 @@ export type ProviderSpec = {
   basePath: string;
   sendPath: string;
   example: string;
+  auth: { scheme: "basic"; username: string; password: string } | null;
+  pathParams: { name: string; example: string; note: string }[];
   endpoints: ApiEndpoint[];
   detailFields: { label: string; pointer: string; fallback: string | null }[];
 };
+
+export type RequestEncoding = "json" | "form" | "query";
 
 export type ApiEndpoint = {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   path: string;
   description: string;
-  payloadLabel: string;
-  payload: unknown;
+  status: number;
+  request: { encoding: RequestEncoding; fields: unknown } | null;
+  response: unknown;
 };

@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 
-import { useProviderSpec } from '../../providers';
+import { methodColor, requestLabels, useProviderSpec } from '../../providers';
+import { PostmanGuide } from '../guide/PostmanGuide';
+import { Icon } from '../ui/Icon';
 import type { Provider } from '../../types';
 
 export function EndpointList({ provider }: { provider: Provider }) {
   const [selectedEndpoint, setSelectedEndpoint] = useState<string | null>(null);
+  const [showGuide, setShowGuide] = useState(false);
   const endpoints = useProviderSpec(provider)?.endpoints ?? [];
   useEffect(() => {
     setSelectedEndpoint(null);
@@ -12,19 +15,23 @@ export function EndpointList({ provider }: { provider: Provider }) {
 
   return (
     <section className="mt-7" aria-labelledby="api-endpoints-title">
-      <p id="api-endpoints-title" className="text-[11px] font-medium uppercase text-[#242424] dark:text-white/30">
-        API endpoints
-      </p>
+      <div className="flex items-center justify-between gap-2">
+        <p id="api-endpoints-title" className="text-[11px] font-medium uppercase text-[#242424] dark:text-white/30">
+          API endpoints
+        </p>
+        <button
+          type="button"
+          onClick={() => setShowGuide(true)}
+          className="flex items-center gap-1 text-[11px] font-medium text-accent hover:underline"
+        >
+          <Icon name="book" className="h-3.5 w-3.5" />
+          Postman Guide
+        </button>
+      </div>
       <div className="mt-2 space-y-1">
         {endpoints.map((endpoint) => {
           const id = `${endpoint.method}-${endpoint.path}`;
           const selected = selectedEndpoint === id;
-          const methodColor =
-            endpoint.method === 'GET'
-              ? 'text-blue-600 dark:text-blue-400'
-              : endpoint.method === 'POST'
-                ? 'text-emerald-600 dark:text-emerald-400'
-                : 'text-red-600 dark:text-red-400';
           return (
             <div
               key={id}
@@ -37,7 +44,7 @@ export function EndpointList({ provider }: { provider: Provider }) {
                 className="w-full px-2.5 py-2.5 text-left hover:bg-black/[.025] dark:hover:bg-white/[.035]"
               >
                 <span className="flex items-center gap-2">
-                  <span className={`w-10 shrink-0 font-mono text-[9px] font-semibold ${methodColor}`}>
+                  <span className={`w-10 shrink-0 font-mono text-[9px] font-semibold ${methodColor(endpoint.method)}`}>
                     {endpoint.method}
                   </span>
                   <code className="min-w-0 truncate text-[10px] font-medium text-black/65 dark:text-white/65">
@@ -49,19 +56,34 @@ export function EndpointList({ provider }: { provider: Provider }) {
                 </span>
               </button>
               {selected && (
-                <div className="border-t px-2.5 pb-2.5 pt-2">
-                  <p className="mb-1.5 text-[9px] font-medium text-[#242424] dark:text-white/30">
-                    {endpoint.payloadLabel}
-                  </p>
-                  <pre className="scrollbar-none max-h-52 overflow-auto rounded-md bg-[#171719] p-2.5 text-[9px] leading-4 text-[#d6d6db]">
-                    <code>{JSON.stringify(endpoint.payload, null, 2)}</code>
-                  </pre>
+                <div className="space-y-2 border-t px-2.5 pb-2.5 pt-2">
+                  {endpoint.request && (
+                    <Sample label={requestLabels[endpoint.request.encoding]} value={endpoint.request.fields} />
+                  )}
+                  {endpoint.response !== null && endpoint.response !== undefined && (
+                    <Sample label="Sample response" value={endpoint.response} />
+                  )}
+                  {!endpoint.request && (endpoint.response === null || endpoint.response === undefined) && (
+                    <p className="text-[9px] text-[#242424] dark:text-white/30">Responds {endpoint.status} with no body.</p>
+                  )}
                 </div>
               )}
             </div>
           );
         })}
       </div>
+      {showGuide && <PostmanGuide initialProvider={provider} onClose={() => setShowGuide(false)} />}
     </section>
+  );
+}
+
+function Sample({ label, value }: { label: string; value: unknown }) {
+  return (
+    <div>
+      <p className="mb-1.5 text-[9px] font-medium text-[#242424] dark:text-white/30">{label}</p>
+      <pre className="scrollbar-none max-h-52 overflow-auto rounded-md bg-[#171719] p-2.5 text-[9px] leading-4 text-[#d6d6db]">
+        <code>{JSON.stringify(value, null, 2)}</code>
+      </pre>
+    </div>
   );
 }

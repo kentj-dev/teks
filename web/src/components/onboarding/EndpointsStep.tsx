@@ -1,4 +1,4 @@
-import { useProviderSpec } from '../../providers';
+import { methodColor, useProviderSpec } from '../../providers';
 import type { Provider } from '../../types';
 import { Icon } from '../ui/Icon';
 
@@ -27,7 +27,7 @@ export function EndpointsStep({
             className="flex items-start gap-3 rounded-xl border border-transparent px-3 py-2.5 hover:border-black/5 hover:bg-black/[.02] dark:hover:border-white/5 dark:hover:bg-white/[.025]"
           >
             <span
-              className={`mt-0.5 w-11 shrink-0 font-mono text-[10px] font-semibold ${endpoint.method === 'GET' ? 'text-blue-600 dark:text-blue-400' : endpoint.method === 'POST' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}
+              className={`mt-0.5 w-11 shrink-0 font-mono text-[10px] font-semibold ${methodColor(endpoint.method)}`}
             >
               {endpoint.method}
             </span>

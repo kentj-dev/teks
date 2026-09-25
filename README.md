@@ -59,6 +59,61 @@ GET  /api/v4/account/sendernames
 GET  /api/v4/account/users
 ```
 
+## Twilio compatibility
+
+Start with `teks --provider twilio` (or pick Twilio in the inbox). Teks serves Twilio's Messages API
+under the same paths as `https://api.twilio.com`, and never contacts Twilio:
+
+```text
+POST   /2010-04-01/Accounts/:AccountSid/Messages.json
+GET    /2010-04-01/Accounts/:AccountSid/Messages.json
+GET    /2010-04-01/Accounts/:AccountSid/Messages/:Sid.json
+DELETE /2010-04-01/Accounts/:AccountSid/Messages/:Sid.json
+```
+
+Any HTTP Basic credentials are accepted and never stored. Responses, `SM…` SIDs, paging URIs,
+and error bodies (`code`, `message`, `more_info`, `status`) follow Twilio's OpenAPI spec, so the
+official helper libraries work unchanged once their requests are pointed at Teks:
+
+```js
+// Node (twilio)
+const twilio = require('twilio');
+
+class TeksClient extends twilio.RequestClient {
+  request(opts) {
+    return super.request({ ...opts, uri: opts.uri.replace('https://api.twilio.com', 'http://127.0.0.1:8026') });
+  }
+}
+
+const client = twilio(accountSid, authToken, { httpClient: new TeksClient() });
+```
+
+```python
+# Python (twilio)
+from twilio.http.http_client import TwilioHttpClient
+from twilio.rest import Client
+
+class TeksHttpClient(TwilioHttpClient):
+    def request(self, method, url, *args, **kwargs):
+        url = url.replace("https://api.twilio.com", "http://127.0.0.1:8026")
+        return super().request(method, url, *args, **kwargs)
+
+client = Client(account_sid, auth_token, http_client=TeksHttpClient())
+```
+
+Or with cURL:
+
+```bash
+curl -X POST http://127.0.0.1:8026/2010-04-01/Accounts/AC00000000000000000000000000000000/Messages.json \
+  -u AC00000000000000000000000000000000:local \
+  --data-urlencode "To=+15558675310" \
+  --data-urlencode "From=+15017122661" \
+  --data-urlencode "Body=Your OTP is 123456"
+```
+
+Updating a message (`POST …/Messages/:Sid.json`), media sub-resources, and status callbacks are
+not emulated yet.
+
 ## Adding a provider
 
 Every provider is declared in [`src/providers/registry.rs`](src/providers/registry.rs). To add one:
@@ -103,7 +158,7 @@ This builds the React frontend first, embeds `web/dist` into the Rust binary, an
 ## CLI
 
 ```text
-teks [--host <HOST>] [--port <PORT>] [--no-open] [--provider <rest|semaphore>]
+teks [--host <HOST>] [--port <PORT>] [--no-open] [--provider <rest|semaphore|twilio>]
 ```
 
 Teks binds to `127.0.0.1` by default and makes no external requests during normal operation.

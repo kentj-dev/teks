@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 
 import { isIconName, type IconName } from './components/ui/Icon';
-import type { Message, Provider, ProviderSpec } from './types';
+import type { ApiEndpoint, Message, Provider, ProviderSpec, RequestEncoding } from './types';
 
 // Provider metadata comes from the backend registry (src/providers/registry.rs) via
 // GET /api/_teks/providers. Nothing provider-specific should be hard-coded in the frontend.
@@ -29,6 +29,26 @@ export function providerDetailFields(providers: ProviderSpec[], message: Message
     const value = resolvePointer(message, pointer);
     if (value !== undefined && value !== null && value !== '') return [[label, String(value)]];
     return fallback === null ? [] : [[label, fallback]];
+  });
+}
+
+export const requestLabels: Record<RequestEncoding, string> = {
+  json: 'Request body',
+  form: 'Form parameters',
+  query: 'Query parameters',
+};
+
+export function methodColor(method: ApiEndpoint['method']) {
+  if (method === 'GET') return 'text-blue-600 dark:text-blue-400';
+  if (method === 'POST') return 'text-emerald-600 dark:text-emerald-400';
+  if (method === 'DELETE') return 'text-red-600 dark:text-red-400';
+  return 'text-amber-600 dark:text-amber-400';
+}
+
+/** Replaces `:name` path segments with the provider's example values. */
+export function examplePath(spec: ProviderSpec, path: string) {
+  return path.replace(/:([A-Za-z_]+)/g, (match, name: string) => {
+    return spec.pathParams.find((param) => param.name === name)?.example ?? match;
   });
 }
 

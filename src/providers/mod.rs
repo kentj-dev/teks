@@ -1,6 +1,7 @@
 mod registry;
 mod rest;
 pub mod semaphore;
+pub mod twilio;
 
 use std::sync::{Arc, RwLock};
 

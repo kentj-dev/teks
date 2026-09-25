@@ -561,4 +561,209 @@ mod tests {
             StatusCode::OK
         );
     }
+
+    const TWILIO_MESSAGES: &str =
+        "/2010-04-01/Accounts/AC00000000000000000000000000000000/Messages.json";
+
+    async fn twilio(
+        app: &axum::Router,
+        method: &str,
+        path: &str,
+        form: Option<&str>,
+    ) -> axum::response::Response {
+        // "AC00000000000000000000000000000000:token", Base64-encoded.
+        let request = Request::builder()
+            .method(method)
+            .uri(path)
+            .header(
+                header::AUTHORIZATION,
+                "Basic QUMwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA6dG9rZW4=",
+            )
+            .header(header::CONTENT_TYPE, "application/x-www-form-urlencoded");
+        app.clone()
+            .oneshot(
+                request
+                    .body(Body::from(form.unwrap_or_default().to_owned()))
+                    .expect("request"),
+            )
+            .await
+            .expect("Twilio response")
+    }
+
+    #[tokio::test]
+    async fn twilio_creates_fetches_lists_and_deletes_messages() {
+        let app = test_app_with_provider(Provider::Twilio).await;
+        let created = twilio(
+            &app,
+            "POST",
+            TWILIO_MESSAGES,
+            Some("To=%2B15558675310&From=%2B15017122661&Body=Your+OTP+is+123456"),
+        )
+        .await;
+        assert_eq!(created.status(), StatusCode::CREATED);
+        let created = json_body(created).await;
+        let sid = created["sid"].as_str().expect("SID").to_owned();
+        assert!(sid.starts_with("SM") && sid.len() == 34);
+        assert_eq!(created["account_sid"], "AC00000000000000000000000000000000");
+        assert_eq!(created["status"], "queued");
+        assert_eq!(created["to"], "+15558675310");
+        assert_eq!(created["from"], "+15017122661");
+        assert_eq!(created["body"], "Your OTP is 123456");
+        assert_eq!(created["num_segments"], "1");
+        assert_eq!(created["direction"], "outbound-api");
+        assert!(created["date_sent"].is_null());
+        assert_eq!(
+            created["uri"],
+            format!("/2010-04-01/Accounts/AC00000000000000000000000000000000/Messages/{sid}.json")
+        );
+
+        let message_path = created["uri"].as_str().expect("URI").to_owned();
+        let fetched = json_body(twilio(&app, "GET", &message_path, None).await).await;
+        assert_eq!(fetched["sid"], sid);
+        assert_eq!(fetched["status"], "delivered");
+        assert!(fetched["date_sent"].is_string());
+
+        let listed = json_body(twilio(&app, "GET", TWILIO_MESSAGES, None).await).await;
+        assert_eq!(listed["messages"][0]["sid"], sid);
+        assert_eq!(listed["page"], 0);
+        assert_eq!(listed["page_size"], 50);
+        assert!(listed["next_page_uri"].is_null());
+
+        let inbox = json_body(get(&app, "/api/_teks/messages").await).await;
+        assert_eq!(inbox[0]["provider"], "twilio");
+        assert_eq!(inbox[0]["from"], "+15017122661");
+        assert_eq!(inbox[0]["payload"]["MessageSid"], sid);
+
+        let deleted = twilio(&app, "DELETE", &message_path, None).await;
+        assert_eq!(deleted.status(), StatusCode::NO_CONTENT);
+        let missing = twilio(&app, "GET", &message_path, None).await;
+        assert_eq!(missing.status(), StatusCode::NOT_FOUND);
+        assert_eq!(json_body(missing).await["code"], 20404);
+    }
+
+    #[tokio::test]
+    async fn twilio_returns_errors_in_twilio_format() {
+        let app = test_app_with_provider(Provider::Twilio).await;
+        for (form, code) in [
+            ("From=%2B15017122661&Body=Hi", 21604),
+            ("To=%2B15558675310&Body=Hi", 21603),
+            ("To=%2B15558675310&From=%2B15017122661", 21602),
+        ] {
+            let response = twilio(&app, "POST", TWILIO_MESSAGES, Some(form)).await;
+            assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+            let body = json_body(response).await;
+            assert_eq!(body["code"], code);
+            assert_eq!(body["status"], 400);
+            assert_eq!(
+                body["more_info"],
+                format!("https://www.twilio.com/docs/errors/{code}")
+            );
+        }
+
+        let unauthenticated = post_form(&app, TWILIO_MESSAGES, "To=1&From=2&Body=Hi").await;
+        assert_eq!(unauthenticated.status(), StatusCode::UNAUTHORIZED);
+        assert!(
+            unauthenticated
+                .headers()
+                .contains_key(header::WWW_AUTHENTICATE)
+        );
+        assert_eq!(json_body(unauthenticated).await["code"], 20003);
+
+        let malformed_sid = twilio(
+            &app,
+            "GET",
+            "/2010-04-01/Accounts/AC00000000000000000000000000000000/Messages/nope.json",
+            None,
+        )
+        .await;
+        assert_eq!(malformed_sid.status(), StatusCode::NOT_FOUND);
+    }
+
+    #[tokio::test]
+    async fn twilio_supports_messaging_services_and_media() {
+        let app = test_app_with_provider(Provider::Twilio).await;
+        let created = json_body(
+            twilio(
+                &app,
+                "POST",
+                TWILIO_MESSAGES,
+                Some(
+                    "To=%2B15558675310&MessagingServiceSid=MG123\
+                     &MediaUrl=https%3A%2F%2Fexample.com%2Fa.png\
+                     &MediaUrl=https%3A%2F%2Fexample.com%2Fb.png",
+                ),
+            )
+            .await,
+        )
+        .await;
+        assert_eq!(created["status"], "accepted");
+        assert!(created["from"].is_null());
+        assert_eq!(created["messaging_service_sid"], "MG123");
+        assert_eq!(created["num_media"], "2");
+
+        let inbox = json_body(get(&app, "/api/_teks/messages").await).await;
+        assert_eq!(inbox[0]["from"], "MG123");
+        assert_eq!(
+            inbox[0]["payload"]["MediaUrl"][1],
+            "https://example.com/b.png"
+        );
+    }
+
+    #[tokio::test]
+    async fn twilio_lists_filter_page_and_stay_within_the_account() {
+        let app = test_app_with_provider(Provider::Twilio).await;
+        for to in ["+15550000001", "+15550000002", "+15550000002"] {
+            let form = format!("To={}&From=%2B15017122661&Body=Hi", to.replace('+', "%2B"));
+            twilio(&app, "POST", TWILIO_MESSAGES, Some(&form)).await;
+        }
+        twilio(
+            &app,
+            "POST",
+            "/2010-04-01/Accounts/ACother/Messages.json",
+            Some("To=%2B15550000002&From=%2B15017122661&Body=Hi"),
+        )
+        .await;
+
+        let filtered = json_body(
+            twilio(
+                &app,
+                "GET",
+                &format!("{TWILIO_MESSAGES}?To=%2B15550000002"),
+                None,
+            )
+            .await,
+        )
+        .await;
+        assert_eq!(filtered["messages"].as_array().expect("messages").len(), 2);
+
+        let first =
+            json_body(twilio(&app, "GET", &format!("{TWILIO_MESSAGES}?PageSize=2"), None).await)
+                .await;
+        assert_eq!(first["messages"].as_array().expect("messages").len(), 2);
+        assert_eq!(first["end"], 1);
+        let next = first["next_page_uri"]
+            .as_str()
+            .expect("next page")
+            .to_owned();
+        assert!(next.contains("PageSize=2") && next.contains("Page=1"));
+
+        let second = json_body(twilio(&app, "GET", &next, None).await).await;
+        assert_eq!(second["messages"].as_array().expect("messages").len(), 1);
+        assert_eq!(second["start"], 2);
+        assert!(second["next_page_uri"].is_null());
+        assert!(second["previous_page_uri"].is_string());
+
+        let today = chrono::Utc::now().format("%Y-%m-%d").to_string();
+        let by_date = json_body(
+            twilio(
+                &app,
+                "GET",
+                &format!("{TWILIO_MESSAGES}?DateSent={today}"),
+                None,
+            )
+            .await,
+        )
+        .await;
+        assert_eq!(by_date["messages"].as_array().expect("messages").len(), 3);
+    }
 }
