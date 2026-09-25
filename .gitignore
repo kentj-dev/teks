@@ -7,3 +7,6 @@
 /web/dist
 .DS_Store
 .pnpm-store
+
+# Private notes
+rg.md

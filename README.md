@@ -72,7 +72,7 @@ with `--provider`. The inbox's **Postman Guide** walks through every endpoint st
 | **Twilio** | `teks --provider twilio` | Base URL `https://api.twilio.com` → `http://127.0.0.1:8026` |
 | **Semaphore** | `teks --provider semaphore` | Base URL `https://api.semaphore.co` → `http://127.0.0.1:8026` |
 
-Want another provider? [Open an issue](https://github.com/kentj-dev/teks/issues).
+Want another provider? See the [roadmap](ROADMAP.md) or [open an issue](https://github.com/kentj-dev/teks/issues).
 
 ### Twilio
 
