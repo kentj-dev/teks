@@ -132,11 +132,9 @@ jobs:
         with:
           "cache": "npm"
           "cache-dependency-path": "web/package-lock.json"
-          "node-version": 22
+          "node-version": 24
       - name: "Build frontend"
-        run: |
-          npm ci
-          npm run build
+        run: "npm ci --prefix web && npm run build --prefix web"
       - name: Install dist
         run: ${{ matrix.install_dist.run }}
       # Get the dist-manifest

@@ -1,11 +1,10 @@
 - name: Set up Node.js
   uses: actions/setup-node@v4
   with:
-    node-version: 22
+    node-version: 24
     cache: npm
     cache-dependency-path: web/package-lock.json
+# dist does not carry `working-directory` into the workflow, so target web/ explicitly. One line
+# keeps the step failing correctly under both bash and PowerShell (Windows).
 - name: Build frontend
-  working-directory: web
-  run: |
-    npm ci
-    npm run build
+  run: npm ci --prefix web && npm run build --prefix web
