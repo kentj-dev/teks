@@ -40,7 +40,7 @@ function App() {
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = window.localStorage.getItem('teks-theme');
     if (saved === 'light' || saved === 'dark') return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return 'dark';
   });
   const [providers, setProviders] = useState<ProviderSpec[]>([]);
   const [provider, setProvider] = useState<Provider>(() => window.localStorage.getItem('teks-provider') ?? 'rest');
@@ -229,6 +229,7 @@ function App() {
           onSelect={changeProvider}
           onComplete={completeProviderSetup}
           onClose={providerSetupComplete ? () => setShowProviderSetup(false) : undefined}
+          initialStep={providerSetupComplete ? 2 : 1}
         />
       ) : (
         <main className="h-dvh bg-[#f2f2f2] dark:bg-[#0d0d0f]">

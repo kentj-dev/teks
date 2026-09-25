@@ -87,8 +87,8 @@ Releases are built by [dist](https://github.com/axodotdev/cargo-dist) in GitHub 
 (`.github/workflows/release.yml`). Bump `version` in `Cargo.toml`, commit, then push a matching tag:
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag vX.Y.Z
+git push origin vX.Y.Z
 ```
 
 CI builds the frontend, compiles binaries for macOS, Linux, and Windows, publishes a GitHub

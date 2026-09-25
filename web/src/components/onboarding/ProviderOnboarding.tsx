@@ -15,6 +15,7 @@ export function ProviderOnboarding({
   onSelect,
   onComplete,
   onClose,
+  initialStep = 1,
 }: {
   provider: Provider;
   theme: Theme;
@@ -22,8 +23,10 @@ export function ProviderOnboarding({
   onSelect: (provider: Provider) => Promise<boolean>;
   onComplete: () => void;
   onClose?: () => void;
+  /** Returning users skip the introduction and land on the provider choice. */
+  initialStep?: 1 | 2;
 }) {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(initialStep);
 
   async function selectProvider(nextProvider: Provider) {
     const selected = await onSelect(nextProvider);

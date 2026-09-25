@@ -58,6 +58,17 @@ export function ProviderStep({
           );
         })}
       </div>
+      <p className="mx-auto mt-5 max-w-2xl text-center text-xs text-black/45 dark:text-white/40">
+        More providers are on the way.{' '}
+        <a
+          href="https://github.com/kentj-dev/teks/issues"
+          target="_blank"
+          rel="noreferrer"
+          className="font-medium text-accent hover:underline"
+        >
+          Request one on GitHub
+        </a>
+      </p>
       <button
         type="button"
         onClick={onBack}

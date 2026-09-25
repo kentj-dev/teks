@@ -55,7 +55,7 @@ export function UtilityPanel({
       />
       <QuickLinks />
       <footer className="mt-auto pt-4 text-[10px] text-black/30 dark:text-white/25">
-        <p>Teks 0.1.0</p>
+        <p>Teks {__TEKS_VERSION__}</p>
         <p className="mt-1">Local SMS testing for developers.</p>
       </footer>
     </aside>
