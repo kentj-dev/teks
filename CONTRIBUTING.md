@@ -10,11 +10,15 @@ adding a provider, and cutting a release.
 
 ## Run from source
 
+The inbox frontend is compiled into the binary, so build it once before the first `cargo run`:
+
 ```bash
+cd web && npm ci && npm run build && cd ..
 cargo run -- --no-open
 ```
 
-`cargo run` serves the frontend already compiled into `web/dist`. Messages are stored in your
+`web/dist` is build output and isn't committed; rebuild it whenever you want `cargo run` to pick
+up frontend changes (or use the Vite dev server below). Messages are stored in your
 per-user application data folder; pass `--data-dir <PATH>` (a hidden flag) to use a scratch
 location instead.
 

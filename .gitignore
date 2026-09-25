@@ -4,3 +4,6 @@
 *.db
 *.db-shm
 *.db-wal
+/web/dist
+.DS_Store
+.pnpm-store
