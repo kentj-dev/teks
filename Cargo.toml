@@ -4,6 +4,11 @@ version = "0.1.0"
 edition = "2024"
 description = "Local SMS testing for developers"
 license = "MIT"
+repository = "https://github.com/kentj-dev/teks-rust"
+homepage = "https://github.com/kentj-dev/teks-rust"
+readme = "README.md"
+keywords = ["sms", "testing", "twilio", "mock", "developer-tools"]
+categories = ["development-tools::testing", "command-line-utilities"]
 
 [dependencies]
 async-stream = "0.3"
@@ -29,3 +34,8 @@ uuid = { version = "1", features = ["v4", "serde"] }
 [dev-dependencies]
 http-body-util = "0.1"
 tower = { version = "0.5", features = ["util"] }
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"

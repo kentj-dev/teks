@@ -2,7 +2,29 @@
 
 Local SMS testing for developers. Teks captures SMS requests on localhost and shows them instantly in a conversation-style inbox.
 
-## Run locally
+## Install
+
+macOS / Linux (Homebrew):
+
+```bash
+brew install kentj-dev/tap/teks
+```
+
+macOS / Linux (shell installer):
+
+```bash
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/kentj-dev/teks-rust/releases/latest/download/teks-installer.sh | sh
+```
+
+Windows (PowerShell):
+
+```powershell
+powershell -ExecutionPolicy Bypass -c "irm https://github.com/kentj-dev/teks-rust/releases/latest/download/teks-installer.ps1 | iex"
+```
+
+Then run `teks`. The inbox opens in your browser at `http://127.0.0.1:8026`.
+
+## Run from source
 
 ```bash
 cargo run -- --no-open
@@ -152,6 +174,20 @@ cargo run
 ```bash
 ./scripts/build-release.sh
 ```
+
+## Releasing
+
+Releases are built by [dist](https://github.com/axodotdev/cargo-dist) in GitHub Actions
+(`.github/workflows/release.yml`). Bump `version` in `Cargo.toml`, commit, then push a matching tag:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+CI builds the frontend, compiles binaries for macOS, Linux, and Windows, publishes a GitHub
+Release with the installers, and updates the formula in `kentj-dev/homebrew-tap` (using the
+`HOMEBREW_TAP_TOKEN` secret). After changing `dist-workspace.toml`, run `dist generate`.
 
 This builds the React frontend first, embeds `web/dist` into the Rust binary, and produces the standalone executable at `target/release/teks`.
 
