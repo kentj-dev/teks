@@ -2,7 +2,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use super::{CapturedMessage, ProviderError, SmsProviderAdapter};
+use super::{CapturedMessage, Provider, ProviderError, SmsProviderAdapter};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct RestIncomingRequest {
@@ -18,7 +18,7 @@ impl SmsProviderAdapter for RestProvider {
     type IncomingRequest = RestIncomingRequest;
 
     fn provider_name(&self) -> &'static str {
-        "rest"
+        Provider::Rest.id()
     }
 
     fn normalize(&self, request: Self::IncomingRequest) -> Result<CapturedMessage, ProviderError> {

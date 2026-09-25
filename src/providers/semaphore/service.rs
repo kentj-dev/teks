@@ -9,9 +9,13 @@ use super::{
     requests::{AccountRequest, MessageListRequest, SendRequest},
     responses::{AccountResponse, SemaphoreMessageResponse, SenderNameResponse, UserResponse},
 };
-use crate::{AppState, database::Message, error::AppError, providers::CapturedMessage};
+use crate::{
+    AppState,
+    database::Message,
+    error::AppError,
+    providers::{CapturedMessage, Provider},
+};
 
-const PROVIDER: &str = "semaphore";
 const REDACTED_API_KEY: &str = "********";
 const DATE_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
 
@@ -132,7 +136,7 @@ impl SemaphoreService {
 
             let captured = CapturedMessage {
                 id: Uuid::new_v4(),
-                provider: PROVIDER.into(),
+                provider: Provider::Semaphore.id().into(),
                 recipient,
                 sender: Some(sender.clone()),
                 body: body.clone(),
@@ -165,7 +169,10 @@ impl SemaphoreService {
         }
         let (limit, page) = request.pagination();
         let offset = page.saturating_sub(1).saturating_mul(limit);
-        let messages = state.database.list_messages_by_provider(PROVIDER).await?;
+        let messages = state
+            .database
+            .list_messages_by_provider(Provider::Semaphore.id())
+            .await?;
 
         Ok(messages
             .into_iter()
@@ -196,7 +203,7 @@ impl SemaphoreService {
         request.require_api_key()?;
         let message = state
             .database
-            .get_message_by_provider_id(PROVIDER, id)
+            .get_message_by_provider_id(Provider::Semaphore.id(), id)
             .await?;
         Ok(self.message_response(&message))
     }

@@ -31,10 +31,10 @@ stored. Teks never contacts Semaphore.
 Start directly in Semaphore mode with:
 
 ```bash
-teks --semaphore
+teks --provider semaphore
 ```
 
-Plain `teks` starts in REST API mode. The first-use provider setup and the Change provider button
+Plain `teks` starts in REST API mode (`--semaphore` still works as a shorthand). The first-use provider setup and the Change provider button
 can switch the running server between the two modes. Only the selected provider's public endpoints
 are enabled; requests to the other provider return a `409 Conflict` response explaining which
 endpoints can be used.
@@ -58,6 +58,17 @@ GET  /api/v4/account/transactions
 GET  /api/v4/account/sendernames
 GET  /api/v4/account/users
 ```
+
+## Adding a provider
+
+Every provider is declared in [`src/providers/registry.rs`](src/providers/registry.rs). To add one:
+
+1. Implement its adapter under `src/providers/<name>/` and expose a `router()` for its endpoints.
+2. Add one line to the `providers!` list in the registry and write its `ProviderSpec` there.
+
+The CLI `--provider` values, endpoint gating, startup banner and the entire inbox UI (onboarding
+cards, endpoint docs, cURL example, inspector fields) read from the registry through
+`GET /api/_teks/providers`, so no frontend changes are needed.
 
 ## Frontend development
 
@@ -92,7 +103,7 @@ This builds the React frontend first, embeds `web/dist` into the Rust binary, an
 ## CLI
 
 ```text
-teks [--host <HOST>] [--port <PORT>] [--no-open] [--semaphore]
+teks [--host <HOST>] [--port <PORT>] [--no-open] [--provider <rest|semaphore>]
 ```
 
 Teks binds to `127.0.0.1` by default and makes no external requests during normal operation.

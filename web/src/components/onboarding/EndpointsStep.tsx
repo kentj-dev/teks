@@ -1,6 +1,5 @@
-import { endpointsFor } from '../../data/apiEndpoints';
+import { useProviderSpec } from '../../providers';
 import type { Provider } from '../../types';
-import { formatProvider } from '../../utils/format';
 import { Icon } from '../ui/Icon';
 
 export function EndpointsStep({
@@ -12,16 +11,17 @@ export function EndpointsStep({
   onBack: () => void;
   onComplete: () => void;
 }) {
+  const spec = useProviderSpec(provider);
   return (
     <div className="mx-auto max-w-2xl">
       <div className="text-center">
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{formatProvider(provider)} endpoints</h1>
+        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{spec?.label ?? provider} endpoints</h1>
         <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-black/50 dark:text-white/45">
           Your server is ready. Use these endpoints at <code className="text-accent">{window.location.origin}</code>.
         </p>
       </div>
       <div className="mt-8 max-h-[38vh] space-y-2 overflow-y-auto autohide-scrollbar rounded-2xl border border-gray-400 dark:border-gray-600 bg-white p-2 shadow-sm dark:bg-[#19191b]">
-        {endpointsFor(provider).map((endpoint) => (
+        {(spec?.endpoints ?? []).map((endpoint) => (
           <div
             key={`${endpoint.method}-${endpoint.path}`}
             className="flex items-start gap-3 rounded-xl border border-transparent px-3 py-2.5 hover:border-black/5 hover:bg-black/[.02] dark:hover:border-white/5 dark:hover:bg-white/[.025]"

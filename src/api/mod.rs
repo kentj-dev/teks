@@ -7,11 +7,37 @@ use std::sync::Arc;
 
 use axum::{Router, routing::get};
 
-use crate::{AppState, providers::semaphore, web};
+use crate::{AppState, providers::Provider, web};
 
 pub fn router(state: Arc<AppState>) -> Router {
-    Router::new()
+    let router = Router::new()
         .route("/api/health", get(health::health))
+        .route("/api/events", get(events::events))
+        .route(
+            "/api/_teks/provider",
+            get(provider::get_provider).put(provider::update_provider),
+        )
+        .route("/api/_teks/providers", get(provider::list_providers))
+        .route(
+            "/api/_teks/messages",
+            get(messages::inbox_list_messages).delete(messages::inbox_clear_messages),
+        )
+        .route(
+            "/api/_teks/messages/{id}",
+            get(messages::inbox_get_message).delete(messages::inbox_delete_message),
+        );
+    Provider::ALL
+        .iter()
+        .fold(router, |router, provider| {
+            router.merge((provider.spec().routes)())
+        })
+        .fallback(web::serve)
+        .with_state(state)
+}
+
+/// Public endpoints of Teks' native REST provider.
+pub fn rest_routes() -> Router<Arc<AppState>> {
+    Router::new()
         .route(
             "/api/messages",
             get(messages::list_messages)
@@ -22,22 +48,6 @@ pub fn router(state: Arc<AppState>) -> Router {
             "/api/messages/{id}",
             get(messages::get_message).delete(messages::delete_message),
         )
-        .route("/api/events", get(events::events))
-        .route(
-            "/api/_teks/provider",
-            get(provider::get_provider).put(provider::update_provider),
-        )
-        .route(
-            "/api/_teks/messages",
-            get(messages::inbox_list_messages).delete(messages::inbox_clear_messages),
-        )
-        .route(
-            "/api/_teks/messages/{id}",
-            get(messages::inbox_get_message).delete(messages::inbox_delete_message),
-        )
-        .merge(semaphore::routes::router())
-        .fallback(web::serve)
-        .with_state(state)
 }
 
 #[cfg(test)]
@@ -503,7 +513,7 @@ mod tests {
         assert_eq!(semaphore_while_rest.status(), StatusCode::CONFLICT);
         assert_eq!(
             json_body(semaphore_while_rest).await["error"],
-            "REST API is selected. Only REST endpoints under '/api/messages' can be used. Select Semaphore or start Teks with '--semaphore'."
+            "REST API is selected. Only REST API endpoints under '/api/messages' can be used. Change the provider in the inbox or start Teks with '--provider semaphore'."
         );
 
         let switched = app
@@ -534,7 +544,7 @@ mod tests {
         assert_eq!(rest_while_semaphore.status(), StatusCode::CONFLICT);
         assert_eq!(
             json_body(rest_while_semaphore).await["error"],
-            "Semaphore is selected. Only Semaphore endpoints under '/api/v4' can be used."
+            "Semaphore is selected. Only Semaphore endpoints under '/api/v4' can be used. Change the provider in the inbox or start Teks with '--provider rest'."
         );
 
         let semaphore = post_form(

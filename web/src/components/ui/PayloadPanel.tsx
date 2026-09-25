@@ -11,7 +11,6 @@ export function PayloadPanel({
   compact?: boolean;
 }) {
   const formatted = JSON.stringify(message.payload, null, 2);
-  const title = message.provider === 'semaphore' ? 'Raw request' : 'Raw request payload';
   return (
     <section className={compact ? 'mt-4' : 'mt-6'}>
       <div className="mb-2 flex items-center justify-between">
@@ -22,7 +21,7 @@ export function PayloadPanel({
               : 'text-xs font-medium text-[#242424] dark:text-white/40'
           }
         >
-          {title}
+          Raw request
         </h3>
         <button
           type="button"

@@ -64,6 +64,10 @@ const icons: Record<IconName, LucideIcon> = {
   sort: ArrowUpDown,
 };
 
+export function isIconName(value: string): value is IconName {
+  return value in icons;
+}
+
 export function Icon({
   name,
   className = "h-5 w-5",

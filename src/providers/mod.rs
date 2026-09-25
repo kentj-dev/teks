@@ -1,34 +1,18 @@
+mod registry;
 mod rest;
 pub mod semaphore;
 
 use std::sync::{Arc, RwLock};
 
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use thiserror::Error;
 use uuid::Uuid;
 
+pub use registry::{Provider, ProviderSpec};
 pub use rest::{RestIncomingRequest, RestProvider};
 
 use crate::error::AppError;
-
-#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Provider {
-    #[default]
-    Rest,
-    Semaphore,
-}
-
-impl Provider {
-    pub fn label(self) -> &'static str {
-        match self {
-            Self::Rest => "REST API",
-            Self::Semaphore => "Semaphore",
-        }
-    }
-}
 
 #[derive(Clone, Debug)]
 pub struct ProviderSelection {
@@ -62,15 +46,14 @@ impl ProviderSelection {
             return Ok(());
         }
 
-        let message = match active {
-            Provider::Semaphore => {
-                "Semaphore is selected. Only Semaphore endpoints under '/api/v4' can be used."
-            }
-            Provider::Rest => {
-                "REST API is selected. Only REST endpoints under '/api/messages' can be used. Select Semaphore or start Teks with '--semaphore'."
-            }
-        };
-        Err(AppError::ProviderMismatch(message.into()))
+        let spec = active.spec();
+        Err(AppError::ProviderMismatch(format!(
+            "{label} is selected. Only {label} endpoints under '{base}' can be used. \
+             Change the provider in the inbox or start Teks with '--provider {expected}'.",
+            label = spec.label,
+            base = spec.base_path,
+            expected = expected.id(),
+        )))
     }
 }
 

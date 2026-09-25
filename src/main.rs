@@ -13,7 +13,7 @@ use cli::Cli;
 use database::Database;
 use error::AppError;
 use events::EventBus;
-use providers::{Provider, ProviderSelection};
+use providers::ProviderSelection;
 use tokio::net::TcpListener;
 use tracing::{error, info};
 use tracing_subscriber::EnvFilter;
@@ -46,11 +46,7 @@ async fn run() -> Result<(), AppError> {
         .map_err(|_| AppError::InvalidAddress(format!("{}:{}", cli.host, cli.port)))?;
 
     let database = Database::open(cli.data_dir.as_deref()).await?;
-    let initial_provider = if cli.semaphore {
-        Provider::Semaphore
-    } else {
-        Provider::Rest
-    };
+    let initial_provider = cli.initial_provider();
     let state = Arc::new(AppState {
         database,
         events: EventBus::new(),
@@ -74,11 +70,7 @@ async fn run() -> Result<(), AppError> {
         "Teks {}\n\n✓ SMS gateway ready\n✓ Database ready\n\nProvider  {}\nInbox     {base_url}\nAPI       {base_url}{}\n\nPress Ctrl+C to stop.",
         env!("CARGO_PKG_VERSION"),
         initial_provider.label(),
-        if initial_provider == Provider::Semaphore {
-            "/api/v4/messages"
-        } else {
-            "/api/messages"
-        }
+        initial_provider.spec().send_path,
     );
 
     if !cli.no_open {

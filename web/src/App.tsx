@@ -12,10 +12,11 @@ import type {
   MessageSortOrder,
   Provider,
   ProviderResponse,
+  ProviderSpec,
   Theme,
   ViewMode,
 } from './types';
-import { formatProvider } from './utils/format';
+import { ProvidersContext, providerLabel } from './providers';
 
 function App() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -41,9 +42,8 @@ function App() {
     if (saved === 'light' || saved === 'dark') return saved;
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
-  const [provider, setProvider] = useState<Provider>(() =>
-    window.localStorage.getItem('teks-provider') === 'semaphore' ? 'semaphore' : 'rest',
-  );
+  const [providers, setProviders] = useState<ProviderSpec[]>([]);
+  const [provider, setProvider] = useState<Provider>(() => window.localStorage.getItem('teks-provider') ?? 'rest');
   const [providerSetupComplete, setProviderSetupComplete] = useState(
     () => window.localStorage.getItem('teks-provider-setup-complete') === 'true',
   );
@@ -73,6 +73,14 @@ function App() {
   }, [viewMode]);
 
   useEffect(() => {
+    fetch('/api/_teks/providers')
+      .then((response) => {
+        if (!response.ok) throw new Error('Could not load providers');
+        return response.json() as Promise<ProviderSpec[]>;
+      })
+      .then(setProviders)
+      .catch(() => toast.error('Could not load providers'));
+
     fetch('/api/_teks/provider')
       .then((response) => {
         if (!response.ok) throw new Error('Could not load provider');
@@ -158,7 +166,7 @@ function App() {
       }
       const updated = (await response.json()) as ProviderResponse;
       setProvider(updated.provider);
-      toast.success(`${formatProvider(updated.provider)} selected`);
+      toast.success(`${providerLabel(providers, updated.provider)} selected`);
       return true;
     } catch {
       toast.error('Could not change provider');
@@ -212,7 +220,7 @@ function App() {
   }
 
   return (
-    <>
+    <ProvidersContext.Provider value={providers}>
       {showProviderSetup ? (
         <ProviderOnboarding
           provider={provider}
@@ -281,7 +289,7 @@ function App() {
         richColors
         toastOptions={{ style: { fontSize: 'var(--teks-text-13)' } }}
       />
-    </>
+    </ProvidersContext.Provider>
   );
 }
 

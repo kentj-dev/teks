@@ -21,11 +21,23 @@ export type Theme = "light" | "dark";
 export type ViewMode = "phone" | "developer";
 export type MessageSortOrder = "newest" | "oldest";
 export type FontSize = "compact" | "normal" | "zoomed";
-export type Provider = "rest" | "semaphore";
+export type Provider = string;
 export type ProviderResponse = { provider: Provider };
 
+export type ProviderSpec = {
+  id: Provider;
+  label: string;
+  description: string;
+  icon: string;
+  basePath: string;
+  sendPath: string;
+  example: string;
+  endpoints: ApiEndpoint[];
+  detailFields: { label: string; pointer: string; fallback: string | null }[];
+};
+
 export type ApiEndpoint = {
-  method: "GET" | "POST" | "DELETE";
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   path: string;
   description: string;
   payloadLabel: string;

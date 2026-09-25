@@ -1,5 +1,3 @@
-import type { Message } from "../types";
-
 export function formatTime(value: string) {
   return new Intl.DateTimeFormat(undefined, {
     hour: "numeric",
@@ -20,29 +18,3 @@ export function formatPhone(value: string) {
     : value;
 }
 
-export function formatProvider(value: string) {
-  if (value === "rest") return "REST API";
-  if (value === "semaphore") return "Semaphore";
-  return value;
-}
-
-export function semaphoreFields(message: Message): [string, string][] {
-  if (message.provider !== "semaphore") return [];
-  const payload =
-    message.payload &&
-    typeof message.payload === "object" &&
-    !Array.isArray(message.payload)
-      ? (message.payload as Record<string, unknown>)
-      : {};
-  return [
-    ["Semaphore Message ID", String(message.provider_message_id ?? "—")],
-    ["Type", typeof payload.type === "string" ? payload.type : "Single"],
-    [
-      "Network",
-      typeof payload.network === "string" ? payload.network : "Unknown",
-    ],
-    ...(typeof payload.code_text === "string"
-      ? ([["OTP Code", payload.code_text]] as [string, string][])
-      : []),
-  ];
-}

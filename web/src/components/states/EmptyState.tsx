@@ -1,5 +1,6 @@
 import { Image } from '@unpic/react';
 import teksArt from '../../../images/teks-art-1.png';
+import { useProviderSpec } from '../../providers';
 import type { Provider, Theme } from '../../types';
 import { Icon } from '../ui/Icon';
 import { ThemeButton } from '../ui/ThemeButton';
@@ -15,11 +16,9 @@ export function EmptyState({
   onThemeChange: (theme: Theme) => void;
   provider: Provider;
 }) {
-  const endpoint = `${window.location.origin}${provider === 'semaphore' ? '/api/v4/messages' : '/api/messages'}`;
-  const command =
-    provider === 'semaphore'
-      ? `curl --data \\\n+  "apikey=local&number=09171234567&message=Your OTP is 123456&sendername=MyApp" \\\n+  ${endpoint}`
-      : `curl -X POST ${endpoint} \\\n+  -H "Content-Type: application/json" \\\n+  -d '{\n    "to": "09171234567",\n    "from": "MyApp",\n    "message": "Your OTP is 123456"\n  }'`;
+  const spec = useProviderSpec(provider);
+  const endpoint = `${window.location.origin}${spec?.sendPath ?? ''}`;
+  const command = spec?.example.replaceAll('{endpoint}', endpoint) ?? '';
 
   return (
     <div className="relative flex flex-1 items-center justify-center overflow-y-auto px-5 py-10">

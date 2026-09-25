@@ -1,5 +1,6 @@
 import type { Message } from '../../types';
-import { formatFullDate, formatProvider, semaphoreFields } from '../../utils/format';
+import { providerDetailFields, providerLabel, useProviders } from '../../providers';
+import { formatFullDate } from '../../utils/format';
 import { Icon } from '../ui/Icon';
 import { IconButton } from '../ui/IconButton';
 import { PayloadPanel } from '../ui/PayloadPanel';
@@ -15,12 +16,13 @@ export function Inspector({
   onCopy: (value: string, label?: string) => void;
   onDelete: (message: Message) => void;
 }) {
+  const providers = useProviders();
   const details = [
     ['UUID', message.id],
     ['To', message.to],
     ['From', message.from ?? '—'],
-    ['Provider', formatProvider(message.provider)],
-    ...semaphoreFields(message),
+    ['Provider', providerLabel(providers, message.provider)],
+    ...providerDetailFields(providers, message),
     ['Status', message.status],
     ['Timestamp', formatFullDate(message.created_at)],
   ];

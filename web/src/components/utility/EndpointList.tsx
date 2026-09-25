@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 
-import { endpointsFor } from '../../data/apiEndpoints';
+import { useProviderSpec } from '../../providers';
 import type { Provider } from '../../types';
 
 export function EndpointList({ provider }: { provider: Provider }) {
   const [selectedEndpoint, setSelectedEndpoint] = useState<string | null>(null);
-  const endpoints = endpointsFor(provider);
+  const endpoints = useProviderSpec(provider)?.endpoints ?? [];
   useEffect(() => {
     setSelectedEndpoint(null);
   }, [provider]);

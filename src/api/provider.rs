@@ -3,7 +3,10 @@ use std::sync::Arc;
 use axum::{Json, extract::State};
 use serde::{Deserialize, Serialize};
 
-use crate::{AppState, providers::Provider};
+use crate::{
+    AppState,
+    providers::{Provider, ProviderSpec},
+};
 
 #[derive(Deserialize)]
 pub struct UpdateProviderRequest {
@@ -29,4 +32,13 @@ pub async fn update_provider(
     Json(ProviderResponse {
         provider: request.provider,
     })
+}
+
+pub async fn list_providers() -> Json<Vec<&'static ProviderSpec>> {
+    Json(
+        Provider::ALL
+            .iter()
+            .map(|provider| provider.spec())
+            .collect(),
+    )
 }

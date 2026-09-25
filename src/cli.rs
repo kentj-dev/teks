@@ -2,6 +2,8 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
+use crate::providers::Provider;
+
 #[derive(Debug, Parser)]
 #[command(name = "teks", version, about = "Local SMS testing for developers.")]
 pub struct Cli {
@@ -17,8 +19,12 @@ pub struct Cli {
     #[arg(long)]
     pub no_open: bool,
 
-    /// Start with only the Semaphore-compatible API enabled.
-    #[arg(long)]
+    /// Provider whose API is enabled at startup.
+    #[arg(long, value_enum, default_value_t)]
+    pub provider: Provider,
+
+    /// Shorthand for '--provider semaphore'.
+    #[arg(long, hide = true, conflicts_with = "provider")]
     pub semaphore: bool,
 
     /// Override the application data directory (useful for development and tests).
@@ -26,23 +32,41 @@ pub struct Cli {
     pub data_dir: Option<PathBuf>,
 }
 
+impl Cli {
+    pub fn initial_provider(&self) -> Provider {
+        if self.semaphore {
+            Provider::Semaphore
+        } else {
+            self.provider
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use clap::Parser;
 
     use super::Cli;
+    use crate::providers::Provider;
 
-    #[test]
-    fn rest_is_the_default_provider() {
-        assert!(!Cli::try_parse_from(["teks"]).unwrap().semaphore);
+    fn provider(args: &[&str]) -> Provider {
+        Cli::try_parse_from(args).unwrap().initial_provider()
     }
 
     #[test]
-    fn semaphore_flag_selects_semaphore() {
-        assert!(
-            Cli::try_parse_from(["teks", "--semaphore"])
-                .unwrap()
-                .semaphore
-        );
+    fn rest_is_the_default_provider() {
+        assert_eq!(provider(&["teks"]), Provider::Rest);
+    }
+
+    #[test]
+    fn provider_flag_selects_any_registered_provider() {
+        for &expected in Provider::ALL {
+            assert_eq!(provider(&["teks", "--provider", expected.id()]), expected);
+        }
+    }
+
+    #[test]
+    fn semaphore_flag_is_kept_as_a_shorthand() {
+        assert_eq!(provider(&["teks", "--semaphore"]), Provider::Semaphore);
     }
 }
