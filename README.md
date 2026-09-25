@@ -13,13 +13,13 @@ brew install kentj-dev/tap/teks
 macOS / Linux (shell installer):
 
 ```bash
-curl --proto '=https' --tlsv1.2 -LsSf https://github.com/kentj-dev/teks-rust/releases/latest/download/teks-installer.sh | sh
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/kentj-dev/teks/releases/latest/download/teks-installer.sh | sh
 ```
 
 Windows (PowerShell):
 
 ```powershell
-powershell -ExecutionPolicy Bypass -c "irm https://github.com/kentj-dev/teks-rust/releases/latest/download/teks-installer.ps1 | iex"
+powershell -ExecutionPolicy Bypass -c "irm https://github.com/kentj-dev/teks/releases/latest/download/teks-installer.ps1 | iex"
 ```
 
 Then run `teks`. The inbox opens in your browser at `http://127.0.0.1:8026`.

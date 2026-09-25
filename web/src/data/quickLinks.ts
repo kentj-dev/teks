@@ -23,7 +23,7 @@ export const quickLinks: QuickLink[] = [
   {
     label: 'Rate Teks',
     hint: 'Leave a GitHub star',
-    href: 'https://github.com/kentj-dev/teks-rust',
+    href: 'https://github.com/kentj-dev/teks',
     icon: 'star',
   },
   {
