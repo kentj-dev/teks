@@ -15,10 +15,10 @@ export const quickLinks: QuickLink[] = [
     icon: 'globe',
   },
   {
-    label: 'Quick guide',
-    hint: 'Setup and API usage',
-    href: 'https://teks.dev/guide',
-    icon: 'book',
+    label: `Teks v${__TEKS_VERSION__}`,
+    hint: 'Release notes',
+    href: `https://github.com/kentj-dev/teks/releases/tag/v${__TEKS_VERSION__}`,
+    icon: 'info',
   },
   {
     label: 'Rate Teks',
